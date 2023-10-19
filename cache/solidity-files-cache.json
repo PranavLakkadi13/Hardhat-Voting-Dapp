@@ -584,8 +584,8 @@
       ]
     },
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/voting.sol": {
-      "lastModificationDate": 1697644506088,
-      "contentHash": "05e3dafb5117a65a0a081185a3a8a32a",
+      "lastModificationDate": 1697725285265,
+      "contentHash": "387c29ff08ad3e428ee444837d48d304",
       "sourceName": "contracts/voting.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -626,6 +626,49 @@
       ],
       "artifacts": [
         "voting"
+      ]
+    },
+    "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/FundVoting.sol": {
+      "lastModificationDate": 1697731304936,
+      "contentHash": "2311b97b2a3393019f3619113725190a",
+      "sourceName": "contracts/FundVoting.sol",
+      "solcConfig": {
+        "version": "0.8.20",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata",
+                "devdoc",
+                "userdoc",
+                "storageLayout",
+                "evm.gasEstimates"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          },
+          "metadata": {
+            "useLiteralContent": true
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.0"
+      ],
+      "artifacts": [
+        "FundVoting"
       ]
     }
   }

@@ -94,5 +94,31 @@ contract voting {
         }
     }
 
+    function getProposalDescription(uint256 id) external view returns (string memory) {
+        Proposal storage proposal = s_proposalMapping[id];
+        return proposal.description;
+    }
+
+    function getProposalYesVotes(uint256 id) external view returns (uint256) {
+        Proposal storage proposal = s_proposalMapping[id];
+        return proposal.yesVotes;
+    }
+
+    function getProposalNoVotes(uint256 id) external view returns (uint256) {
+        Proposal storage proposal = s_proposalMapping[id];
+        return proposal.noVotes;
+    }
+
+    function getProposaldeadline(uint256 id) external view returns (uint256) {
+        Proposal storage proposal = s_proposalMapping[id];
+        return proposal.deadline;
+    }
+
+    function getProposaldIsVoter(uint256 id) external view returns (bool) {
+        Proposal storage proposal = s_proposalMapping[id];
+        return proposal.voters[msg.sender];
+    }
+
+    
 
 }

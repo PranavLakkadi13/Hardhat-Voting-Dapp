@@ -629,8 +629,8 @@
       ]
     },
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/FundVoting.sol": {
-      "lastModificationDate": 1697731304936,
-      "contentHash": "2311b97b2a3393019f3619113725190a",
+      "lastModificationDate": 1697739923030,
+      "contentHash": "6ba7ca41eafee28a654e5782db1c4bed",
       "sourceName": "contracts/FundVoting.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -663,7 +663,9 @@
           }
         }
       },
-      "imports": [],
+      "imports": [
+        "./SoulBoundToken.sol"
+      ],
       "versionPragmas": [
         "^0.8.0"
       ],

@@ -8,7 +8,11 @@ contract FundVoting {
     // ERRORS
     error  FundVoting__OnlyMemberAllowed();
     error  FundVoting__OnlyOwnerCanCallThis();
-    error FundVoting__TimeToContributeExpired();
+    error  FundVoting__TimeToContributeExpired();
+
+
+    // ENUMS 
+    enum VOTE {YES,NO}
 
     // STRUCTS
     struct Proposal {
@@ -24,14 +28,15 @@ contract FundVoting {
     }
 
     struct Request {
+        uint256 proposalID;
         address receipient;
         string description;
         uint256 valueRequestedToBeSpent;
         bool completed;
         uint256 yesVotes;
         uint256 noVotes;
-        uint256 proposalID;
-        uint256 requestCount; 
+        uint256 voteCount;
+        mapping(address => VOTE) voted;
     }
 
 
@@ -47,6 +52,8 @@ contract FundVoting {
     event ProposalCreated(string indexed description, uint256 indexed goal , uint256 indexed deadline);
 
     event Contributed(address indexed contributee, uint256 indexed contribution);
+
+    event RequestCreated(uint256 indexed proposalID, address indexed recipient, string indexed description, uint256 value);
  
     
     // MODIFIERS
@@ -111,6 +118,42 @@ contract FundVoting {
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[existingProposal.requestCount];
+
+        newRequest.receipient = _recipient;
+        newRequest.description = _description;
+        newRequest.valueRequestedToBeSpent = _value;
+        newRequest.proposalID = proposalID;
+
+        unchecked {
+            existingProposal.requestCount++;
+        }
+
+        emit RequestCreated(proposalID, _recipient , _description, _value);
     }
+
+    function VoteRequest(uint256 proposalID, uint256 requestID, VOTE vote) external OnlyMember {
+        Proposal storage existingProposal = proposals[proposalID];
+        
+        Request storage newRequest = existingProposal.requests[requestID];
+
+        if (vote == VOTE.YES) {
+            newRequest.voted[msg.sender] = VOTE.YES;
+            unchecked {
+                newRequest.voteCount++;
+                newRequest.yesVotes++;
+            }
+        }
+
+        else {
+            newRequest.voted[msg.sender] = VOTE.NO;
+            unchecked {
+                newRequest.voteCount++;
+                newRequest.noVotes++;
+            }
+        }
+    }
+
+
+    // function changeVoteOnRequest() external 
 
 }

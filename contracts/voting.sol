@@ -119,6 +119,8 @@ contract voting {
         return proposal.voters[msg.sender];
     }
 
-    
+    function getProposalCount() external view returns (uint256) {
+        return s_proposalCount;
+    }
 
 }

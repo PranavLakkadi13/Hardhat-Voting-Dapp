@@ -584,8 +584,8 @@
       ]
     },
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/voting.sol": {
-      "lastModificationDate": 1697725285265,
-      "contentHash": "387c29ff08ad3e428ee444837d48d304",
+      "lastModificationDate": 1697993486092,
+      "contentHash": "b03e6f41e9a6cd8670bca9fae253aebf",
       "sourceName": "contracts/voting.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -629,8 +629,8 @@
       ]
     },
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/FundVoting.sol": {
-      "lastModificationDate": 1697988539773,
-      "contentHash": "1223d0212f7b64d59ab1037f686c6fd2",
+      "lastModificationDate": 1697995417752,
+      "contentHash": "5bb135561080ce207c872d8ba807b1fa",
       "sourceName": "contracts/FundVoting.sol",
       "solcConfig": {
         "version": "0.8.20",

@@ -6,102 +6,68 @@ import "./SoulBoundToken.sol";
 contract FundVoting {
 
     // ERRORS
-    error FundVoting__NotOwnerCalled();
-    error FundVoting__DeadlinePassed();
-    error FundVoting__NotMemberOfDAO();
-    error FundVoting__InvalidSpendingRequest();
-    error FundVoting__ZeroVAlueNotAllowed();
-    error FundVoting__InvalidProposalID();
+    error  FundVoting__OnlyMemberAllowed();
+    error  FundVoting__OnlyOwnerCanCallThis();
+    error FundVoting__TimeToContributeExpired();
 
     // STRUCTS
-    struct Contribution {
-        uint256 Value;
-        bool Contributed;
+    struct Proposal {
+        address ownerOfProposal;
+        uint256 deadline;
+        uint256 goal;
+        uint256 raisedAmount;
+        string mainDescription;
+        mapping(address => uint256) contributors;
+        uint256 numOfContributors;
     }
 
     struct Request {
+        address receipient;
         string description;
-        address recipient;
-        uint value;
+        uint256 valueRequestedToBeSpent;
         bool completed;
-        uint noOfvoters;
-        mapping(address => bool) voters;
+        uint256 yesVotes;
+        uint256 noVotes; 
     }
 
-    // EVENTS 
-    event CreatedRequested(string indexed Description, address indexed receiver, uint256 indexed value);
 
     // STATE VARIABLES 
-    string private s_description;
-    address private immutable i_owner;
-    uint256 private immutable i_goal;
-    uint256 private immutable i_deadline;
-    uint256 private s_raisedAmount;
-    uint256 private s_requestCounter;
-    mapping(address => Contribution) private s_contributions;
-    mapping(uint256 => Request) private s_requests;
-    uint256 private s_numOfRequests;
+    SoulBoundToken private Token;
 
-    SoulBoundToken private immutable s_member;
+    uint256 private proposalCount;
+    uint256 private requestCount;
 
-    // Functions 
-    modifier OnlyAdmin() {
-        if (msg.sender != i_owner) {
-            revert FundVoting__NotOwnerCalled();
+    mapping(uint256 => Proposal) private proposals;
+    mapping(uint256 => Request) private requests;
+ 
+    
+    // MODIFIERS
+    modifier OnlyMember() {
+        if (Token.balanceOf(msg.sender) == 0) {
+            revert FundVoting__OnlyMemberAllowed();
         }
         _;
     }
 
-    modifier IsActive() {
-        if (block.timestamp > i_deadline) {
-            revert FundVoting__DeadlinePassed();
+    modifier IsActive(uint256 ID) {
+        if (proposals[ID].deadline < block.timestamp) {
+            revert FundVoting__TimeToContributeExpired();
         }
         _;
     }
 
-    modifier IsMember() {
-        if (s_member.balanceOf(msg.sender) > 0) {
-            revert FundVoting__NotMemberOfDAO();
+    modifier OnlyOwner(uint256 ID) {
+        if (proposals[ID].ownerOfProposal != msg.sender) {
+            revert FundVoting__OnlyOwnerCanCallThis();
         }
         _;
     }
-
-    constructor(uint256 _goal, uint256 _deadline, address TokenAddress, string memory _description) payable{
-        i_owner = msg.sender;
-        i_goal = _goal;
-        i_deadline = block.timestamp + _deadline;
-        s_member = SoulBoundToken(TokenAddress);
-        s_description = _description;
+    
+    // FUNCTIONS 
+    constructor(address SoulBoundToken1) payable {
+        Token = SoulBoundToken(SoulBoundToken1);
     }
 
-    function CreateRequest(string calldata _description, uint256 _value, address receiver) external OnlyAdmin {
-        if (_value >= address(this).balance) {
-            revert FundVoting__InvalidSpendingRequest();
-        }
-
-        Request storage newRequest = s_requests[s_requestCounter];
-
-        s_requestCounter++;
-        newRequest.description = _description;
-        newRequest.recipient = receiver;
-        newRequest.value = _value;
-
-        emit CreatedRequested(_description, receiver, _value);
-    }
-
-    function Contribute(uint256 proposalID) external payable IsMember IsActive{
-        if (msg.value == 0) {
-            revert FundVoting__ZeroVAlueNotAllowed();
-        }
-        if (proposalID > s_requestCounter) {
-            revert FundVoting__InvalidProposalID();
-        }
-        
-
-    }
-
-    function getBalance() public view returns(uint256){
-        return address(this).balance;
-    }
+    // function 
 
 }

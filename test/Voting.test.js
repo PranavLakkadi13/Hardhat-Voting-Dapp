@@ -51,11 +51,18 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
             const description = await VotingContract.getProposalDescription(0)
             const timestamp = await VotingContract.getProposaldeadline(0);
 
-            const time = await time.latest();
+            const timestamp1 = await time.latest();
 
             assert.equal(description.toString(), "Abhishek is GAY");
-            assert.equal(timestamp,time+10000)
+            assert.equal(timestamp,timestamp1+10000);
         });
+        it("checks to see if the proposal counter is increased", async () => {
+            const x = await VotingContract.getProposalCount();
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",10000);
+            const y = await VotingContract.getProposalCount();
+            assert(x!=y);
+        });
+        
     })
 
 });

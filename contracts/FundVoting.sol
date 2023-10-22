@@ -19,6 +19,8 @@ contract FundVoting {
         string mainDescription;
         mapping(address => uint256) contributors;
         uint256 numOfContributors;
+        uint256 requestCount;
+        mapping(uint256 => Request) requests;
     }
 
     struct Request {
@@ -27,7 +29,9 @@ contract FundVoting {
         uint256 valueRequestedToBeSpent;
         bool completed;
         uint256 yesVotes;
-        uint256 noVotes; 
+        uint256 noVotes;
+        uint256 proposalID;
+        uint256 requestCount; 
     }
 
 
@@ -35,10 +39,14 @@ contract FundVoting {
     SoulBoundToken private Token;
 
     uint256 private proposalCount;
-    uint256 private requestCount;
 
     mapping(uint256 => Proposal) private proposals;
-    mapping(uint256 => Request) private requests;
+
+
+    // EVENTS 
+    event ProposalCreated(string indexed description, uint256 indexed goal , uint256 indexed deadline);
+
+    event Contributed(address indexed contributee, uint256 indexed contribution);
  
     
     // MODIFIERS
@@ -68,6 +76,41 @@ contract FundVoting {
         Token = SoulBoundToken(SoulBoundToken1);
     }
 
-    // function 
+    function createProposal(string calldata _description , uint256 _deadline, uint256 _goal) external OnlyMember {
+        Proposal storage proposal = proposals[proposalCount];
+
+        proposal.deadline = block.timestamp + _deadline;
+        proposal.ownerOfProposal = msg.sender;
+        proposal.goal = _goal;
+        proposal.mainDescription = _description;
+
+        unchecked {
+            proposalCount++;
+        }
+
+        emit ProposalCreated(_description, _goal , _deadline);
+    }
+
+    function Contribute(uint256 proposalID) external payable OnlyMember IsActive(proposalID) {
+        
+        Proposal storage proposal = proposals[proposalID];
+
+        if (proposal.contributors[msg.sender] == 0) {
+            proposal.numOfContributors++;
+        }
+
+        unchecked {
+            proposal.contributors[msg.sender] += msg.value;
+            proposal.raisedAmount += msg.value;
+        }
+
+        emit Contributed(msg.sender, msg.value);
+    }
+
+    function CreateRequest(uint256 proposalID, address _recipient, string calldata _description, uint256 _value) external OnlyOwner(proposalID){
+        Proposal storage existingProposal = proposals[proposalID];
+        
+        Request storage newRequest = existingProposal.requests[existingProposal.requestCount];
+    }
 
 }

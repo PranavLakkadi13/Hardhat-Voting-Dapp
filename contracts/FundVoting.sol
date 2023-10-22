@@ -9,6 +9,9 @@ contract FundVoting {
     error  FundVoting__OnlyMemberAllowed();
     error  FundVoting__OnlyOwnerCanCallThis();
     error  FundVoting__TimeToContributeExpired();
+    error  FundVoting__RequestHasAlreadyBeenFulfilled();
+    error  FundVoting__YouDidntReceiveEnoughVotesToPassRequest();
+    error  FundVoting__TransactionFailed();
 
 
     // ENUMS 
@@ -77,6 +80,17 @@ contract FundVoting {
         }
         _;
     }
+
+    modifier ActiveIfRequestNotFulfilled(uint256 proposalID,uint256 requestID) {
+        Proposal storage currentProposal = proposals[proposalID];
+
+        Request storage thisRequest = currentProposal.requests[requestID];
+
+        if (thisRequest.completed) {
+            revert FundVoting__RequestHasAlreadyBeenFulfilled();
+        }
+        _;
+    }
     
     // FUNCTIONS 
     constructor(address SoulBoundToken1) payable {
@@ -114,7 +128,10 @@ contract FundVoting {
         emit Contributed(msg.sender, msg.value);
     }
 
-    function CreateRequest(uint256 proposalID, address _recipient, string calldata _description, uint256 _value) external OnlyOwner(proposalID){
+    function CreateRequest(uint256 proposalID, address _recipient, string calldata _description, uint256 _value) 
+    external 
+    OnlyOwner(proposalID)
+    {
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[existingProposal.requestCount];
@@ -131,7 +148,9 @@ contract FundVoting {
         emit RequestCreated(proposalID, _recipient , _description, _value);
     }
 
-    function VoteRequest(uint256 proposalID, uint256 requestID, VOTE vote) external OnlyMember {
+    function VoteRequest(uint256 proposalID, uint256 requestID, VOTE vote) external 
+    OnlyMember 
+    ActiveIfRequestNotFulfilled(proposalID,requestID) {
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[requestID];
@@ -153,7 +172,49 @@ contract FundVoting {
         }
     }
 
+    function changeVoteOnRequest(uint256 proposalID, uint256 requestID, VOTE vote) 
+    external 
+    OnlyMember 
+    ActiveIfRequestNotFulfilled(proposalID,requestID) {
+        Proposal storage existingProposal = proposals[proposalID];
+        
+        Request storage newRequest = existingProposal.requests[requestID];
 
-    // function changeVoteOnRequest() external 
+        if (newRequest.voted[msg.sender] == VOTE.YES) {
+            newRequest.yesVotes--;
+        }
+        if (newRequest.voted[msg.sender] == VOTE.NO) {
+            newRequest.noVotes--;
+        }
+
+        if (vote == VOTE.YES) {
+            newRequest.yesVotes++;
+            newRequest.voted[msg.sender] = VOTE.YES;
+        }
+        
+        if (vote == VOTE.NO) {
+            newRequest.noVotes++;
+            newRequest.voted[msg.sender] == VOTE.NO;
+        }
+    }
+
+    function makePayment(uint256 proposalID, uint256 requestID) 
+    external 
+    OnlyOwner(proposalID) 
+    ActiveIfRequestNotFulfilled(proposalID,requestID) {
+        Proposal storage existingProposal = proposals[proposalID];
+        
+        Request storage newRequest = existingProposal.requests[requestID];
+
+        if (newRequest.voteCount / 2 > newRequest.yesVotes ) {
+            revert FundVoting__YouDidntReceiveEnoughVotesToPassRequest();
+        }
+
+        (bool success, ) = newRequest.receipient.call{value : newRequest.valueRequestedToBeSpent}("");
+
+        if (!success) {
+            revert FundVoting__TransactionFailed();
+        }
+    }
 
 }

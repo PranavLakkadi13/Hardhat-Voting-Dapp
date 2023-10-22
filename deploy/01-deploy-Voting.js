@@ -19,4 +19,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
 };
 
-module.exports.tags = ["voting"];
+module.exports.tags = ["voting","all"];

@@ -16,4 +16,4 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
 };
 
-module.exports.tags = ["SoulBoundToken"];
+module.exports.tags = ["SoulBoundToken","all"];

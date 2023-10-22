@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/SoulBoundToken.sol": {
-      "lastModificationDate": 1697640767694,
-      "contentHash": "1813c9eaf854b8acaa79b79193c18a2a",
+      "lastModificationDate": 1697740079687,
+      "contentHash": "0224f297b54cdc04534428d0908695f7",
       "sourceName": "contracts/SoulBoundToken.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -629,8 +629,8 @@
       ]
     },
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/FundVoting.sol": {
-      "lastModificationDate": 1697739923030,
-      "contentHash": "6ba7ca41eafee28a654e5782db1c4bed",
+      "lastModificationDate": 1697982035901,
+      "contentHash": "807c5343ad26ec797fe0f6f457ecc04e",
       "sourceName": "contracts/FundVoting.sol",
       "solcConfig": {
         "version": "0.8.20",

@@ -11,6 +11,7 @@ contract FundVoting {
     error FundVoting__NotMemberOfDAO();
     error FundVoting__InvalidSpendingRequest();
     error FundVoting__ZeroVAlueNotAllowed();
+    error FundVoting__InvalidProposalID();
 
     // STRUCTS
     struct Contribution {
@@ -73,13 +74,14 @@ contract FundVoting {
         s_description = _description;
     }
 
-    function CreateRequest(string calldata _description, uint256 _value, address receiver) external IsMember {
+    function CreateRequest(string calldata _description, uint256 _value, address receiver) external OnlyAdmin {
         if (_value >= address(this).balance) {
             revert FundVoting__InvalidSpendingRequest();
         }
 
         Request storage newRequest = s_requests[s_requestCounter];
 
+        s_requestCounter++;
         newRequest.description = _description;
         newRequest.recipient = receiver;
         newRequest.value = _value;
@@ -87,12 +89,19 @@ contract FundVoting {
         emit CreatedRequested(_description, receiver, _value);
     }
 
-    function Contribute() external payable IsMember IsActive{
+    function Contribute(uint256 proposalID) external payable IsMember IsActive{
         if (msg.value == 0) {
             revert FundVoting__ZeroVAlueNotAllowed();
         }
+        if (proposalID > s_requestCounter) {
+            revert FundVoting__InvalidProposalID();
+        }
         
-        
+
+    }
+
+    function getBalance() public view returns(uint256){
+        return address(this).balance;
     }
 
 }

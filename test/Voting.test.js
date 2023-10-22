@@ -55,7 +55,7 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
 
             assert.equal(description.toString(), "Abhishek is GAY");
             assert.equal(timestamp,time+10000)
-        })
+        });
     })
 
 });

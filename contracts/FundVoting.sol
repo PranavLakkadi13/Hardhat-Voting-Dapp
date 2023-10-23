@@ -13,6 +13,10 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__RequestHasAlreadyBeenFulfilled();
     error  FundVoting__YouDidntReceiveEnoughVotesToPassRequest();
     error  FundVoting__TransactionFailed();
+    error  FundVoting__InvalidReceipentAddressProvided();
+    error  FundVoting__ValueShouldBeGreaterThanZero();
+    error  FundVoting__DontHaveSufficientFunds();
+    error  FundVoting__NoRequestsMade();
 
 
     // ENUMS 
@@ -99,6 +103,10 @@ contract FundVoting is ReentrancyGuard {
     }
 
     function createProposal(string calldata _description , uint256 _deadline, uint256 _goal) external OnlyMember {
+        if (_goal <= 0 ) {
+            revert FundVoting__ValueShouldBeGreaterThanZero();
+        }
+
         Proposal storage proposal = proposals[proposalCount];
 
         proposal.deadline = block.timestamp + _deadline;
@@ -114,6 +122,10 @@ contract FundVoting is ReentrancyGuard {
     }
 
     function Contribute(uint256 proposalID) external payable OnlyMember IsActive(proposalID) {
+
+        if (msg.value <= 0 ) {
+            revert FundVoting__ValueShouldBeGreaterThanZero();
+        }
         
         Proposal storage proposal = proposals[proposalID];
 
@@ -133,9 +145,21 @@ contract FundVoting is ReentrancyGuard {
     external 
     OnlyOwner(proposalID)
     {
+        if (_value <= 0 ) {
+            revert FundVoting__ValueShouldBeGreaterThanZero();
+        }
+
+        if (_recipient == address(0)) {
+            revert FundVoting__InvalidReceipentAddressProvided();
+        }
+
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[existingProposal.requestCount];
+
+        if (_value > getRemainingBalance(proposalID)) {
+            revert FundVoting__DontHaveSufficientFunds();
+        }
 
         newRequest.receipient = _recipient;
         newRequest.description = _description;
@@ -215,12 +239,40 @@ contract FundVoting is ReentrancyGuard {
         uint256 transferAMount = newRequest.valueRequestedToBeSpent;
         newRequest.valueRequestedToBeSpent = 0;
         newRequest.completed = true;
+        existingProposal.raisedAmount -= transferAMount;
 
         (bool success, ) = newRequest.receipient.call{value : transferAMount}("");
 
         if (!success) {
             revert FundVoting__TransactionFailed();
         }
+    }
+
+    // GETTER FUNCTION 
+    function getTotalAMountRequested(uint256 proposalID) public view returns (uint256 x) {
+        Proposal storage existingProposal = proposals[proposalID];
+    
+        uint256 y = existingProposal.requestCount;
+
+        if (y == 0 ) {
+            x = existingProposal.raisedAmount;
+        }
+
+        for (uint i = 0; i < y; ) {
+
+            Request storage newRequest = existingProposal.requests[i];
+            x += newRequest.valueRequestedToBeSpent;
+
+            unchecked {
+                i++;
+            }
+        }
+    }
+
+    function getRemainingBalance(uint256 proposalID) public view returns (uint256 x) {
+        Proposal storage existingProposal = proposals[proposalID];
+
+        x = existingProposal.raisedAmount - getTotalAMountRequested(proposalID);
     }
 
 }

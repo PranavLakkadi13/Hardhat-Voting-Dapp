@@ -32,7 +32,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -80,7 +80,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -123,7 +123,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -168,7 +168,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -213,7 +213,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -264,7 +264,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -307,7 +307,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -350,7 +350,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -393,7 +393,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -438,7 +438,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -481,7 +481,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -526,7 +526,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -571,7 +571,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -614,7 +614,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },
@@ -629,8 +629,8 @@
       ]
     },
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/FundVoting.sol": {
-      "lastModificationDate": 1697999633180,
-      "contentHash": "265b2909fd1bc8b9934c53a1bddcfbc8",
+      "lastModificationDate": 1698003660534,
+      "contentHash": "5698996dbe5a7aed1ad7cb33afb8168c",
       "sourceName": "contracts/FundVoting.sol",
       "solcConfig": {
         "version": "0.8.20",
@@ -659,7 +659,7 @@
             }
           },
           "metadata": {
-            "useLiteralContent": true
+            "useLiteralContent": false
           }
         }
       },

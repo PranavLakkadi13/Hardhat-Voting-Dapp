@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "./SoulBoundToken.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-contract FundVoting {
+contract FundVoting is ReentrancyGuard {
 
     // ERRORS
     error  FundVoting__OnlyMemberAllowed();
@@ -201,7 +202,8 @@ contract FundVoting {
     function makePayment(uint256 proposalID, uint256 requestID) 
     external 
     OnlyOwner(proposalID) 
-    ActiveIfRequestNotFulfilled(proposalID,requestID) {
+    ActiveIfRequestNotFulfilled(proposalID,requestID) 
+    nonReentrant {
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[requestID];
@@ -210,7 +212,11 @@ contract FundVoting {
             revert FundVoting__YouDidntReceiveEnoughVotesToPassRequest();
         }
 
-        (bool success, ) = newRequest.receipient.call{value : newRequest.valueRequestedToBeSpent}("");
+        uint256 transferAMount = newRequest.valueRequestedToBeSpent;
+        newRequest.valueRequestedToBeSpent = 0;
+        newRequest.completed = true;
+
+        (bool success, ) = newRequest.receipient.call{value : transferAMount}("");
 
         if (!success) {
             revert FundVoting__TransactionFailed();

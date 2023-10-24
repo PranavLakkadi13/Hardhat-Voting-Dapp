@@ -17,6 +17,8 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__ValueShouldBeGreaterThanZero();
     error  FundVoting__DontHaveSufficientFunds();
     error  FundVoting__NoRequestsMade();
+    error  FundVoting__InvalidProposal();
+    error  FundVoting__InvalidRequestIDOfThatProposal();
 
 
     // ENUMS 
@@ -96,6 +98,22 @@ contract FundVoting is ReentrancyGuard {
         }
         _;
     }
+
+    modifier IfValidProposalID(uint256 proposalID) {
+        if (proposalID > proposalCount) {
+            revert FundVoting__InvalidProposal();
+        }
+        _;
+    }
+
+    modifier IfValidRequestIDOfParticularProposal(uint256 proposalID, uint256 requestID) {
+        Proposal storage currentProposal = proposals[proposalID];
+        if (currentProposal.requestCount <= requestID) {
+            revert FundVoting__InvalidRequestIDOfThatProposal();
+        }
+
+        _;
+    }
     
     // FUNCTIONS 
     constructor(address SoulBoundToken1) payable {
@@ -121,7 +139,10 @@ contract FundVoting is ReentrancyGuard {
         emit ProposalCreated(_description, _goal , _deadline);
     }
 
-    function Contribute(uint256 proposalID) external payable OnlyMember IsActive(proposalID) {
+    function Contribute(uint256 proposalID) external payable 
+    IfValidProposalID(proposalID)
+    OnlyMember 
+    IsActive(proposalID) {
 
         if (msg.value <= 0 ) {
             revert FundVoting__ValueShouldBeGreaterThanZero();
@@ -143,6 +164,7 @@ contract FundVoting is ReentrancyGuard {
 
     function CreateRequest(uint256 proposalID, address _recipient, string calldata _description, uint256 _value) 
     external 
+    IfValidProposalID(proposalID)
     OnlyOwner(proposalID)
     {
         if (_value <= 0 ) {
@@ -175,7 +197,10 @@ contract FundVoting is ReentrancyGuard {
 
     function VoteRequest(uint256 proposalID, uint256 requestID, VOTE vote) external 
     OnlyMember 
-    ActiveIfRequestNotFulfilled(proposalID,requestID) {
+    IfValidProposalID(proposalID)
+    IfValidRequestIDOfParticularProposal(proposalID,requestID)
+    ActiveIfRequestNotFulfilled(proposalID,requestID) 
+     {
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[requestID];
@@ -200,7 +225,10 @@ contract FundVoting is ReentrancyGuard {
     function changeVoteOnRequest(uint256 proposalID, uint256 requestID, VOTE vote) 
     external 
     OnlyMember 
-    ActiveIfRequestNotFulfilled(proposalID,requestID) {
+    IfValidProposalID(proposalID)
+    IfValidRequestIDOfParticularProposal(proposalID,requestID)
+    ActiveIfRequestNotFulfilled(proposalID,requestID) 
+    {
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[requestID];
@@ -226,8 +254,11 @@ contract FundVoting is ReentrancyGuard {
     function makePayment(uint256 proposalID, uint256 requestID) 
     external 
     OnlyOwner(proposalID) 
+    IfValidProposalID(proposalID)
+    IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
-    nonReentrant {
+    nonReentrant 
+    {
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[requestID];
@@ -249,7 +280,9 @@ contract FundVoting is ReentrancyGuard {
     }
 
     // GETTER FUNCTION 
-    function getTotalAMountRequested(uint256 proposalID) public view returns (uint256 x) {
+    function getTotalAMountRequested(uint256 proposalID) public view 
+    IfValidProposalID(proposalID) 
+    returns (uint256 x) {
         Proposal storage existingProposal = proposals[proposalID];
     
         uint256 y = existingProposal.requestCount;
@@ -269,10 +302,55 @@ contract FundVoting is ReentrancyGuard {
         }
     }
 
-    function getRemainingBalance(uint256 proposalID) public view returns (uint256 x) {
+    function getRemainingBalance(uint256 proposalID) IfValidProposalID(proposalID) public 
+    view returns (uint256 x) {
         Proposal storage existingProposal = proposals[proposalID];
 
         x = existingProposal.raisedAmount - getTotalAMountRequested(proposalID);
     }
+
+    function getProposalDescription(uint256 proposalID) IfValidProposalID(proposalID) 
+    public view returns (string memory) {
+        return proposals[proposalID].mainDescription;
+    }
+
+    function getProposalCount() public view returns (uint256) {
+        return proposalCount;
+    }
+
+    function getProposalOwner(uint256 proposalID) IfValidProposalID(proposalID) public view returns (address) {
+        return proposals[proposalID].ownerOfProposal;
+    }
+
+    function getProposalDeadline(uint256 proposalID) IfValidProposalID(proposalID) public view returns (uint256) {
+        return proposals[proposalID].deadline;
+    }
+
+    function getProposalGoal(uint256 proposalID) IfValidProposalID(proposalID) public view returns (uint256) {
+        return proposals[proposalID].goal;
+    }
+
+    function getProposalContributor_Contribution(uint256 proposalID, address contributor) IfValidProposalID(proposalID) 
+    public view returns (uint256) {
+        return proposals[proposalID].contributors[contributor];
+    }
+
+    function getProposalContributionCounter(uint256 proposalID) IfValidProposalID(proposalID) 
+    public view returns (uint256) {
+        return proposals[proposalID].numOfContributors;
+    }
+
+    function getProposalRequestCount(uint256 proposalID) IfValidProposalID(proposalID) 
+    public view returns (uint256) {
+        return proposals[proposalID].requestCount;
+    }
+
+    function getProposalRequestRecepient(uint256 proposalID,uint256 requestId) IfValidProposalID(proposalID) 
+    IfValidRequestIDOfParticularProposal(proposalID,requestId) 
+    public view returns (address) {
+        return proposals[proposalID].requests[requestId].receipient;
+    }
+
+    // function 
 
 }

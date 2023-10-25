@@ -19,6 +19,7 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__NoRequestsMade();
     error  FundVoting__InvalidProposal();
     error  FundVoting__InvalidRequestIDOfThatProposal();
+    error  FundVoting__InvalidAddress();
 
 
     // ENUMS 
@@ -38,7 +39,6 @@ contract FundVoting is ReentrancyGuard {
     }
 
     struct Request {
-        uint256 proposalID;
         address receipient;
         string description;
         uint256 valueRequestedToBeSpent;
@@ -71,7 +71,7 @@ contract FundVoting is ReentrancyGuard {
     
     // MODIFIERS
     modifier OnlyMember() {
-        if (Token.balanceOf(msg.sender) == 0) {
+        if (Token.balanceOf(msg.sender) <= 0) {
             revert FundVoting__OnlyMemberAllowed();
         }
         _;
@@ -200,7 +200,6 @@ contract FundVoting is ReentrancyGuard {
         newRequest.receipient = _recipient;
         newRequest.description = _description;
         newRequest.valueRequestedToBeSpent = _value;
-        newRequest.proposalID = proposalID;
 
         unchecked {
             existingProposal.requestCount++;
@@ -339,7 +338,7 @@ contract FundVoting is ReentrancyGuard {
     }
 
     /// @notice this function is used to get the remaining balance of proposal so that the powner can raise a
-    ///          sepnd request accordingly 
+    ///          spend request accordingly 
     /// @param proposalID The proposal ID whose details user wants to view 
     function getRemainingBalance(uint256 proposalID) IfValidProposalID(proposalID) public 
     view returns (uint256 x) {
@@ -383,30 +382,105 @@ contract FundVoting is ReentrancyGuard {
     /// @param contributor The deatils of the contribution of the contributor of a particular proposal 
     function getProposalContributor_Contribution(uint256 proposalID, address contributor) IfValidProposalID(proposalID) 
     public view returns (uint256) {
+        if (contributor == address(0)) {
+            revert FundVoting__InvalidAddress();
+        }
         return proposals[proposalID].contributors[contributor];
     }
 
-    /// @notice 
+    /// @notice This function is used to get the num of contributors of a particular proposal
     /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalContributionCounter(uint256 proposalID) IfValidProposalID(proposalID) 
     public view returns (uint256) {
         return proposals[proposalID].numOfContributors;
     }
 
+    /// @notice This is used get the request count of a particular proposal 
     /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalRequestCount(uint256 proposalID) IfValidProposalID(proposalID) 
     public view returns (uint256) {
         return proposals[proposalID].requestCount;
     }
 
+    /// @notice This is used to get the the address of the recepient of the particular request of that proposalID
     /// @param proposalID The proposal ID whose details user wants to view 
     /// @param requestId The requestId of the proposal whose receipient address you want 
-    function getProposalRequestRecepient(uint256 proposalID,uint256 requestId) IfValidProposalID(proposalID) 
+    function getRequestRecepient(uint256 proposalID,uint256 requestId) IfValidProposalID(proposalID) 
     IfValidRequestIDOfParticularProposal(proposalID,requestId) 
     public view returns (address) {
         return proposals[proposalID].requests[requestId].receipient;
     }
 
-    // function 
+    /// @notice gets the particular request description of a particular proposal 
+    /// @param proposalID The ID of the proposal whose details u want 
+    /// @param requestID The id of the particular request of proposal whose description you want to see 
+    function getRequestDescription(uint256 proposalID, uint256 requestID) 
+    IfValidProposalID(proposalID)
+    IfValidRequestIDOfParticularProposal(proposalID,requestID) 
+    public view returns (string memory) {
+        return proposals[proposalID].requests[requestID].description;
+    }
 
+    /// @notice This function is used to get the value requested to be spent of a particular proposal 
+    /// @param proposalID The ID of the proposal whose details u want 
+    /// @param requestID The id of the particular request of proposal whose Value to Spent you want to see 
+    function getRequestValueToBeSpent(uint256 proposalID, uint256 requestID)
+    IfValidProposalID(proposalID) 
+    IfValidRequestIDOfParticularProposal(proposalID,requestID)
+    public view returns (uint256){
+        return proposals[proposalID].requests[requestID].valueRequestedToBeSpent;
+    }
+
+    /// @notice This function is used to get the status of a request of a particular proposal 
+    /// @param proposalID The ID of the proposal whose details u want 
+    /// @param requestID The id of the particular request of proposal whose status you want to see 
+    function getRequestResult(uint256 proposalID, uint256 requestID) 
+    IfValidProposalID(proposalID) 
+    IfValidRequestIDOfParticularProposal(proposalID,requestID) 
+    public view returns (bool) {
+        return proposals[proposalID].requests[requestID].completed;
+    }
+
+    /// @notice This function is used to get the number of Yes Votes of a request of a particular proposal 
+    /// @param proposalID The ID of the proposal whose details u want 
+    /// @param requestID The id of the particular request of proposal whose Yes votes you want to see
+    function  getRequestYesVotes(uint256 proposalID, uint256 requestID) 
+    IfValidProposalID(proposalID) 
+    IfValidRequestIDOfParticularProposal(proposalID,requestID) 
+    public view returns (uint256) {
+        return proposals[proposalID].requests[requestID].yesVotes;
+    }
+
+    /// @notice This function is used to get the number of No Votes of a request of a particular proposal 
+    /// @param proposalID The ID of the proposal whose details u want 
+    /// @param requestID The id of the particular request of proposal whose No Votes you want to see
+    function  getRequestNoVotes(uint256 proposalID, uint256 requestID) 
+    IfValidProposalID(proposalID) 
+    IfValidRequestIDOfParticularProposal(proposalID,requestID) 
+    public view returns (uint256) {
+        return proposals[proposalID].requests[requestID].noVotes;
+    }
+
+    /// @notice This function is used to get the number of Votes of a request of a particular proposal 
+    /// @param proposalID The ID of the proposal whose details u want 
+    /// @param requestID The id of the particular request of proposal whose  Votes you want to see
+    function getRequestVoteCount(uint256 proposalID, uint256 requestID) 
+    IfValidProposalID(proposalID) 
+    IfValidRequestIDOfParticularProposal(proposalID,requestID) 
+    public view returns (uint256) {
+        return proposals[proposalID].requests[requestID].voteCount;
+    }
+
+    /// @notice This function is used to get the Vote casted by the  voter of a particular request of a particular proposal 
+    /// @param proposalID The ID of the proposal whose details u want 
+    /// @param requestID The id of the particular request of proposal whose Vote you want to see
+    function getRequestAddressVote(uint256 proposalID, uint256 requestID, address voter) 
+    IfValidProposalID(proposalID) 
+    IfValidRequestIDOfParticularProposal(proposalID,requestID) 
+    public view returns (VOTE) {
+        if (voter == address(0)) {
+            revert FundVoting__InvalidAddress();
+        }
+        return proposals[proposalID].requests[requestID].voted[voter];
+    }
 }

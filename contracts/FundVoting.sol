@@ -65,6 +65,9 @@ contract FundVoting is ReentrancyGuard {
 
     event RequestCreated(uint256 indexed proposalID, address indexed recipient, string indexed description, uint256 value);
  
+    event VoteCasted(address indexed voter, VOTE indexed vote);
+
+    event PaymentMade(uint256 indexed proposalID, uint256 indexed requestID);
     
     // MODIFIERS
     modifier OnlyMember() {
@@ -120,6 +123,9 @@ contract FundVoting is ReentrancyGuard {
         Token = SoulBoundToken(SoulBoundToken1);
     }
 
+    /// @param _description The main Description of the proposal to be Created 
+    /// @param _deadline The duration of the proposal to take in donations 
+    /// @param _goal The Goal of the Campaign 
     function createProposal(string calldata _description , uint256 _deadline, uint256 _goal) external OnlyMember {
         if (_goal <= 0 ) {
             revert FundVoting__ValueShouldBeGreaterThanZero();
@@ -139,6 +145,7 @@ contract FundVoting is ReentrancyGuard {
         emit ProposalCreated(_description, _goal , _deadline);
     }
 
+    /// @param proposalID The Id of the Proposal the user wants to contribute to 
     function Contribute(uint256 proposalID) external payable 
     IfValidProposalID(proposalID)
     OnlyMember 
@@ -162,6 +169,10 @@ contract FundVoting is ReentrancyGuard {
         emit Contributed(msg.sender, msg.value);
     }
 
+    /// @param proposalID The Id of the Proposal the user wants to create a request 
+    /// @param _recipient The address of the funds receiver 
+    /// @param _description The reason to spend the funds 
+    /// @param _value The amount value being transfered 
     function CreateRequest(uint256 proposalID, address _recipient, string calldata _description, uint256 _value) 
     external 
     IfValidProposalID(proposalID)
@@ -195,6 +206,9 @@ contract FundVoting is ReentrancyGuard {
         emit RequestCreated(proposalID, _recipient , _description, _value);
     }
 
+    /// @param proposalID The Id of the Proposal the user wants to vote on 
+    /// @param requestID The Id of the Request the user wants to vote on 
+    /// @param vote The User vote 
     function VoteRequest(uint256 proposalID, uint256 requestID, VOTE vote) external 
     OnlyMember 
     IfValidProposalID(proposalID)
@@ -211,6 +225,7 @@ contract FundVoting is ReentrancyGuard {
                 newRequest.voteCount++;
                 newRequest.yesVotes++;
             }
+            emit VoteCasted(msg.sender, VOTE.YES);
         }
 
         else {
@@ -219,9 +234,14 @@ contract FundVoting is ReentrancyGuard {
                 newRequest.voteCount++;
                 newRequest.noVotes++;
             }
+            emit VoteCasted(msg.sender, VOTE.NO);
         }
+
     }
 
+    /// @param proposalID The Id of the Proposal the user wants to vote on 
+    /// @param requestID The Id of the Request the user wants to vote on 
+    /// @param vote The User vote To change to 
     function changeVoteOnRequest(uint256 proposalID, uint256 requestID, VOTE vote) 
     external 
     OnlyMember 
@@ -243,14 +263,19 @@ contract FundVoting is ReentrancyGuard {
         if (vote == VOTE.YES) {
             newRequest.yesVotes++;
             newRequest.voted[msg.sender] = VOTE.YES;
+            emit VoteCasted(msg.sender, VOTE.YES);
         }
         
         if (vote == VOTE.NO) {
             newRequest.noVotes++;
             newRequest.voted[msg.sender] == VOTE.NO;
+            emit VoteCasted(msg.sender, VOTE.NO);
         }
     }
 
+
+    /// @param proposalID The proposal ID 
+    /// @param requestID The Request ID of a particular proposal user want to fulfill
     function makePayment(uint256 proposalID, uint256 requestID) 
     external 
     OnlyOwner(proposalID) 
@@ -277,9 +302,14 @@ contract FundVoting is ReentrancyGuard {
         if (!success) {
             revert FundVoting__TransactionFailed();
         }
+
+        emit PaymentMade(proposalID, requestID);
     }
 
+    
     // GETTER FUNCTION 
+
+    /// @param proposalID The proposal ID whose details user wants to view 
     function getTotalAMountRequested(uint256 proposalID) public view 
     IfValidProposalID(proposalID) 
     returns (uint256 x) {
@@ -302,6 +332,7 @@ contract FundVoting is ReentrancyGuard {
         }
     }
 
+    /// @param proposalID The proposal ID whose details user wants to view 
     function getRemainingBalance(uint256 proposalID) IfValidProposalID(proposalID) public 
     view returns (uint256 x) {
         Proposal storage existingProposal = proposals[proposalID];
@@ -309,19 +340,23 @@ contract FundVoting is ReentrancyGuard {
         x = existingProposal.raisedAmount - getTotalAMountRequested(proposalID);
     }
 
+    /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalDescription(uint256 proposalID) IfValidProposalID(proposalID) 
     public view returns (string memory) {
         return proposals[proposalID].mainDescription;
     }
 
+    /// @notice Returns the proposal count 
     function getProposalCount() public view returns (uint256) {
         return proposalCount;
     }
 
+    /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalOwner(uint256 proposalID) IfValidProposalID(proposalID) public view returns (address) {
         return proposals[proposalID].ownerOfProposal;
     }
 
+    /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalDeadline(uint256 proposalID) IfValidProposalID(proposalID) public view returns (uint256) {
         return proposals[proposalID].deadline;
     }
@@ -330,21 +365,27 @@ contract FundVoting is ReentrancyGuard {
         return proposals[proposalID].goal;
     }
 
+    /// @param proposalID The proposal ID whose details user wants to view 
+    /// @param contributor The deatils of the contribution of the contributor of a particular proposal 
     function getProposalContributor_Contribution(uint256 proposalID, address contributor) IfValidProposalID(proposalID) 
     public view returns (uint256) {
         return proposals[proposalID].contributors[contributor];
     }
 
+    /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalContributionCounter(uint256 proposalID) IfValidProposalID(proposalID) 
     public view returns (uint256) {
         return proposals[proposalID].numOfContributors;
     }
 
+    /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalRequestCount(uint256 proposalID) IfValidProposalID(proposalID) 
     public view returns (uint256) {
         return proposals[proposalID].requestCount;
     }
 
+    /// @param proposalID The proposal ID whose details user wants to view 
+    /// @param requestId The requestId of the proposal whose receipient address you want 
     function getProposalRequestRecepient(uint256 proposalID,uint256 requestId) IfValidProposalID(proposalID) 
     IfValidRequestIDOfParticularProposal(proposalID,requestId) 
     public view returns (address) {

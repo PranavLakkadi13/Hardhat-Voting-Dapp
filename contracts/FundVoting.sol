@@ -19,7 +19,11 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__NoRequestsMade();
     error  FundVoting__InvalidProposal();
     error  FundVoting__InvalidRequestIDOfThatProposal();
+<<<<<<< HEAD
     error  FundVoting__InvalidAddress();
+=======
+    error FundAllocation__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal();
+>>>>>>> 46a703fcde583b1378e5208ac6da0eff625bd6a6
 
 
     // ENUMS 
@@ -187,6 +191,10 @@ contract FundVoting is ReentrancyGuard {
 
         if (_recipient == address(0)) {
             revert FundVoting__InvalidReceipentAddressProvided();
+        }
+
+        if(_recepient == thisproposal.ownerOfProposal){
+            revert FundAllocation__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal();
         }
 
         Proposal storage existingProposal = proposals[proposalID];
@@ -421,6 +429,7 @@ contract FundVoting is ReentrancyGuard {
         return proposals[proposalID].requests[requestID].description;
     }
 
+<<<<<<< HEAD
     /// @notice This function is used to get the value requested to be spent of a particular proposal 
     /// @param proposalID The ID of the proposal whose details u want 
     /// @param requestID The id of the particular request of proposal whose Value to Spent you want to see 
@@ -484,3 +493,6 @@ contract FundVoting is ReentrancyGuard {
         return proposals[proposalID].requests[requestID].voted[voter];
     }
 }
+=======
+}
+>>>>>>> 46a703fcde583b1378e5208ac6da0eff625bd6a6

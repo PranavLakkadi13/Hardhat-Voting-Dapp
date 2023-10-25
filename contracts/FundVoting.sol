@@ -22,7 +22,7 @@ contract FundVoting is ReentrancyGuard {
 
 
     // ENUMS 
-    enum VOTE {YES,NO}
+    enum VOTE {YES,NO,ABSTAINED}
 
     // STRUCTS
     struct Proposal {
@@ -123,6 +123,7 @@ contract FundVoting is ReentrancyGuard {
         Token = SoulBoundToken(SoulBoundToken1);
     }
 
+    /// @notice This function is used to create a Proposal 
     /// @param _description The main Description of the proposal to be Created 
     /// @param _deadline The duration of the proposal to take in donations 
     /// @param _goal The Goal of the Campaign 
@@ -145,6 +146,7 @@ contract FundVoting is ReentrancyGuard {
         emit ProposalCreated(_description, _goal , _deadline);
     }
 
+    /// @notice This function is used to contribute to the proposal of its a valid proposal 
     /// @param proposalID The Id of the Proposal the user wants to contribute to 
     function Contribute(uint256 proposalID) external payable 
     IfValidProposalID(proposalID)
@@ -169,6 +171,7 @@ contract FundVoting is ReentrancyGuard {
         emit Contributed(msg.sender, msg.value);
     }
 
+    /// @notice This Function is used to create a spending request on a valid proposal 
     /// @param proposalID The Id of the Proposal the user wants to create a request 
     /// @param _recipient The address of the funds receiver 
     /// @param _description The reason to spend the funds 
@@ -206,6 +209,7 @@ contract FundVoting is ReentrancyGuard {
         emit RequestCreated(proposalID, _recipient , _description, _value);
     }
 
+    /// @notice This function is used to vote on a particular request of a particular proposal 
     /// @param proposalID The Id of the Proposal the user wants to vote on 
     /// @param requestID The Id of the Request the user wants to vote on 
     /// @param vote The User vote 
@@ -239,6 +243,7 @@ contract FundVoting is ReentrancyGuard {
 
     }
 
+    /// @notice This function is to change the user's vote on a particular request of proposal proposal 
     /// @param proposalID The Id of the Proposal the user wants to vote on 
     /// @param requestID The Id of the Request the user wants to vote on 
     /// @param vote The User vote To change to 
@@ -273,7 +278,7 @@ contract FundVoting is ReentrancyGuard {
         }
     }
 
-
+    /// @notice This function called by the proposal owner to approve and transfer the payment 
     /// @param proposalID The proposal ID 
     /// @param requestID The Request ID of a particular proposal user want to fulfill
     function makePayment(uint256 proposalID, uint256 requestID) 
@@ -309,8 +314,9 @@ contract FundVoting is ReentrancyGuard {
     
     // GETTER FUNCTION 
 
+    /// @notice This function is used to get total amount requested by the owner to spend 
     /// @param proposalID The proposal ID whose details user wants to view 
-    function getTotalAMountRequested(uint256 proposalID) public view 
+    function getTotalAmountRequested(uint256 proposalID) public view 
     IfValidProposalID(proposalID) 
     returns (uint256 x) {
         Proposal storage existingProposal = proposals[proposalID];
@@ -332,14 +338,17 @@ contract FundVoting is ReentrancyGuard {
         }
     }
 
+    /// @notice this function is used to get the remaining balance of proposal so that the powner can raise a
+    ///          sepnd request accordingly 
     /// @param proposalID The proposal ID whose details user wants to view 
     function getRemainingBalance(uint256 proposalID) IfValidProposalID(proposalID) public 
     view returns (uint256 x) {
         Proposal storage existingProposal = proposals[proposalID];
 
-        x = existingProposal.raisedAmount - getTotalAMountRequested(proposalID);
+        x = existingProposal.raisedAmount - getTotalAmountRequested(proposalID);
     }
 
+    /// @notice This function is used to get the description of a particular proposal 
     /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalDescription(uint256 proposalID) IfValidProposalID(proposalID) 
     public view returns (string memory) {
@@ -351,20 +360,25 @@ contract FundVoting is ReentrancyGuard {
         return proposalCount;
     }
 
+    /// @notice This fuinction is used to get the Owner of a particular proposal 
     /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalOwner(uint256 proposalID) IfValidProposalID(proposalID) public view returns (address) {
         return proposals[proposalID].ownerOfProposal;
     }
 
+    /// @notice This function gets the deadline time of a particular proposal
     /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalDeadline(uint256 proposalID) IfValidProposalID(proposalID) public view returns (uint256) {
         return proposals[proposalID].deadline;
     }
 
+    /// @notice this function gets the goal amount of a particular proposal
+    /// @param proposalID The proposalID of the proposal whose goal amount the user wants to view 
     function getProposalGoal(uint256 proposalID) IfValidProposalID(proposalID) public view returns (uint256) {
         return proposals[proposalID].goal;
     }
 
+    /// @notice This function is used to get the contribution of a contriubutor of a particular proposal
     /// @param proposalID The proposal ID whose details user wants to view 
     /// @param contributor The deatils of the contribution of the contributor of a particular proposal 
     function getProposalContributor_Contribution(uint256 proposalID, address contributor) IfValidProposalID(proposalID) 
@@ -372,6 +386,7 @@ contract FundVoting is ReentrancyGuard {
         return proposals[proposalID].contributors[contributor];
     }
 
+    /// @notice 
     /// @param proposalID The proposal ID whose details user wants to view 
     function getProposalContributionCounter(uint256 proposalID) IfValidProposalID(proposalID) 
     public view returns (uint256) {

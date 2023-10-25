@@ -629,8 +629,8 @@
       ]
     },
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/FundVoting.sol": {
-      "lastModificationDate": 1698162329804,
-      "contentHash": "ed2a3c858889462fb25b090aaa2f77c2",
+      "lastModificationDate": 1698222426437,
+      "contentHash": "44d00eb8cda473b8249558d0af0e0ba8",
       "sourceName": "contracts/FundVoting.sol",
       "solcConfig": {
         "version": "0.8.20",

@@ -32,6 +32,7 @@ contract FundVoting is ReentrancyGuard {
         uint256 deadline;
         uint256 goal;
         uint256 raisedAmount;
+        uint256 amountSpentUntilNow;
         string mainDescription;
         mapping(address => uint256) contributors;
         uint256 numOfContributors;
@@ -48,6 +49,7 @@ contract FundVoting is ReentrancyGuard {
         uint256 noVotes;
         uint256 voteCount;
         mapping(address => VOTE) voted;
+        uint256 requestDeadline;
     }
 
 
@@ -118,6 +120,15 @@ contract FundVoting is ReentrancyGuard {
 
         _;
     }
+
+    modifier IfActiveRequestOfAParticularProposal(uint256 proposalID, uint256 requestID) {
+        Proposal storage currentProposal = proposals[proposalID];
+        Request storage currentRequest = currentProposal.requests[requestID];
+        if (currentRequest.requestDeadline <= block.timestamp) {
+            revert FundVoting__InvalidRequestIDOfThatProposal();
+        }
+        _;
+    }
     
     // FUNCTIONS 
     constructor(address SoulBoundToken1) payable {
@@ -177,10 +188,11 @@ contract FundVoting is ReentrancyGuard {
     /// @param _recipient The address of the funds receiver 
     /// @param _description The reason to spend the funds 
     /// @param _value The amount value being transfered 
-    function CreateRequest(uint256 proposalID, address _recipient, string calldata _description, uint256 _value) 
+    function CreateRequest(uint256 proposalID, address _recipient, string calldata _description, uint256 _value, uint256 _requestDeadline) 
     external 
     IfValidProposalID(proposalID)
     OnlyOwner(proposalID)
+    IfActiveRequestOfAParticularProposal(proposalID, proposals[proposalID].requestCount)
     {
         if (_value <= 0 ) {
             revert FundVoting__ValueShouldBeGreaterThanZero();
@@ -205,6 +217,7 @@ contract FundVoting is ReentrancyGuard {
         newRequest.receipient = _recipient;
         newRequest.description = _description;
         newRequest.valueRequestedToBeSpent = _value;
+        newRequest.requestDeadline = block.timestamp + _requestDeadline; 
 
         unchecked {
             existingProposal.requestCount++;
@@ -222,6 +235,7 @@ contract FundVoting is ReentrancyGuard {
     IfValidProposalID(proposalID)
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
+    IfActiveRequestOfAParticularProposal(proposalID, requestID)
      {
         Proposal storage existingProposal = proposals[proposalID];
         
@@ -256,7 +270,8 @@ contract FundVoting is ReentrancyGuard {
     OnlyMember 
     IfValidProposalID(proposalID)
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
-    ActiveIfRequestNotFulfilled(proposalID,requestID) 
+    ActiveIfRequestNotFulfilled(proposalID,requestID)
+    IfActiveRequestOfAParticularProposal(proposalID, requestID) 
     {
         Proposal storage existingProposal = proposals[proposalID];
         
@@ -304,7 +319,7 @@ contract FundVoting is ReentrancyGuard {
         uint256 transferAMount = newRequest.valueRequestedToBeSpent;
         newRequest.valueRequestedToBeSpent = 0;
         newRequest.completed = true;
-        existingProposal.raisedAmount -= transferAMount;
+        existingProposal.amountSpentUntilNow += transferAMount;
 
         (bool success, ) = newRequest.receipient.call{value : transferAMount}("");
 
@@ -318,30 +333,6 @@ contract FundVoting is ReentrancyGuard {
     
     // GETTER FUNCTION 
 
-    /// @notice This function is used to get total amount requested by the owner to spend 
-    /// @param proposalID The proposal ID whose details user wants to view 
-    function getTotalAmountRequested(uint256 proposalID) public view 
-    IfValidProposalID(proposalID) 
-    returns (uint256 x) {
-        Proposal storage existingProposal = proposals[proposalID];
-    
-        uint256 y = existingProposal.requestCount;
-
-        if (y == 0 ) {
-            x = 0;
-        }
-
-        for (uint i = 0; i < y; ) {
-
-            Request storage newRequest = existingProposal.requests[i];
-            x += newRequest.valueRequestedToBeSpent;
-
-            unchecked {
-                i++;
-            }
-        }
-    }
-
     /// @notice this function is used to get the remaining balance of proposal so that the powner can raise a
     ///          spend request accordingly 
     /// @param proposalID The proposal ID whose details user wants to view 
@@ -349,7 +340,7 @@ contract FundVoting is ReentrancyGuard {
     view returns (uint256 x) {
         Proposal storage existingProposal = proposals[proposalID];
 
-        x = existingProposal.raisedAmount - getTotalAmountRequested(proposalID);
+        x = existingProposal.raisedAmount - existingProposal.amountSpentUntilNow;
     }
 
     /// @notice This function is used to get the description of a particular proposal 
@@ -385,7 +376,8 @@ contract FundVoting is ReentrancyGuard {
     /// @notice This function is used to get the contribution of a contriubutor of a particular proposal
     /// @param proposalID The proposal ID whose details user wants to view 
     /// @param contributor The deatils of the contribution of the contributor of a particular proposal 
-    function getProposalContributor_Contribution(uint256 proposalID, address contributor) IfValidProposalID(proposalID) 
+    function getProposalContributor_Contribution(uint256 proposalID, address contributor) 
+    IfValidProposalID(proposalID) 
     public view returns (uint256) {
         if (contributor == address(0)) {
             revert FundVoting__InvalidAddress();
@@ -395,14 +387,16 @@ contract FundVoting is ReentrancyGuard {
 
     /// @notice This function is used to get the num of contributors of a particular proposal
     /// @param proposalID The proposal ID whose details user wants to view 
-    function getProposalContributionCounter(uint256 proposalID) IfValidProposalID(proposalID) 
+    function getProposalContributionCounter(uint256 proposalID) 
+    IfValidProposalID(proposalID) 
     public view returns (uint256) {
         return proposals[proposalID].numOfContributors;
     }
 
     /// @notice This is used get the request count of a particular proposal 
     /// @param proposalID The proposal ID whose details user wants to view 
-    function getProposalRequestCount(uint256 proposalID) IfValidProposalID(proposalID) 
+    function getProposalRequestCount(uint256 proposalID) 
+    IfValidProposalID(proposalID) 
     public view returns (uint256) {
         return proposals[proposalID].requestCount;
     }
@@ -410,7 +404,8 @@ contract FundVoting is ReentrancyGuard {
     /// @notice This is used to get the the address of the recepient of the particular request of that proposalID
     /// @param proposalID The proposal ID whose details user wants to view 
     /// @param requestId The requestId of the proposal whose receipient address you want 
-    function getRequestRecepient(uint256 proposalID,uint256 requestId) IfValidProposalID(proposalID) 
+    function getRequestRecepient(uint256 proposalID,uint256 requestId) 
+    IfValidProposalID(proposalID) 
     IfValidRequestIDOfParticularProposal(proposalID,requestId) 
     public view returns (address) {
         return proposals[proposalID].requests[requestId].receipient;
@@ -487,5 +482,16 @@ contract FundVoting is ReentrancyGuard {
             revert FundVoting__InvalidAddress();
         }
         return proposals[proposalID].requests[requestID].voted[voter];
+    }
+
+    function getRequestDeadline(uint256 proposalID, uint256 requestID) 
+    IfValidProposalID(proposalID) 
+    IfValidRequestIDOfParticularProposal(proposalID,requestID)
+    external view returns (uint256) {
+        return proposals[proposalID].requests[requestID].requestDeadline;
+    }
+
+    function getSoulBoundTokenAddress() external view returns (SoulBoundToken) {
+        return Token;
     }
 }

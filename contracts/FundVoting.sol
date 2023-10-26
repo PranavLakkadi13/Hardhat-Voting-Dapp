@@ -16,11 +16,12 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__InvalidReceipentAddressProvided();
     error  FundVoting__ValueShouldBeGreaterThanZero();
     error  FundVoting__DontHaveSufficientFunds();
-    error  FundVoting__NoRequestsMade();
     error  FundVoting__InvalidProposal();
     error  FundVoting__InvalidRequestIDOfThatProposal();
     error  FundVoting__InvalidAddress();
     error  FundVoting__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal();
+    error  FundVoting__RequestNotActive();
+    error  FundVoting__RequestActiveNewRequestCantBeCreated();
 
 
     // ENUMS 
@@ -33,6 +34,7 @@ contract FundVoting is ReentrancyGuard {
         uint256 goal;
         uint256 raisedAmount;
         uint256 amountSpentUntilNow;
+        uint256 activeRequest;
         string mainDescription;
         mapping(address => uint256) contributors;
         uint256 numOfContributors;
@@ -121,11 +123,18 @@ contract FundVoting is ReentrancyGuard {
         _;
     }
 
-    modifier IfActiveRequestOfAParticularProposal(uint256 proposalID, uint256 requestID) {
+    modifier IfActiveRequestOfAParticularProposal(uint256 proposalID) {
         Proposal storage currentProposal = proposals[proposalID];
-        Request storage currentRequest = currentProposal.requests[requestID];
-        if (currentRequest.requestDeadline <= block.timestamp) {
-            revert FundVoting__InvalidRequestIDOfThatProposal();
+        if (currentProposal.activeRequest == 0) {
+            revert FundVoting__RequestNotActive();
+        }
+        _;
+    }
+
+    modifier IfActiveRequestExists(uint256 proposalID) {
+        Proposal storage currentProposal = proposals[proposalID];
+        if (currentProposal.activeRequest > 0) {
+            revert FundVoting__RequestActiveNewRequestCantBeCreated();
         }
         _;
     }
@@ -192,7 +201,7 @@ contract FundVoting is ReentrancyGuard {
     external 
     IfValidProposalID(proposalID)
     OnlyOwner(proposalID)
-    IfActiveRequestOfAParticularProposal(proposalID, proposals[proposalID].requestCount)
+    IfActiveRequestExists(proposalID)
     {
         if (_value <= 0 ) {
             revert FundVoting__ValueShouldBeGreaterThanZero();
@@ -221,6 +230,7 @@ contract FundVoting is ReentrancyGuard {
 
         unchecked {
             existingProposal.requestCount++;
+            existingProposal.activeRequest++;
         }
 
         emit RequestCreated(proposalID, _recipient , _description, _value);
@@ -235,7 +245,7 @@ contract FundVoting is ReentrancyGuard {
     IfValidProposalID(proposalID)
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
-    IfActiveRequestOfAParticularProposal(proposalID, requestID)
+    IfActiveRequestOfAParticularProposal(proposalID)
      {
         Proposal storage existingProposal = proposals[proposalID];
         
@@ -271,7 +281,7 @@ contract FundVoting is ReentrancyGuard {
     IfValidProposalID(proposalID)
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID)
-    IfActiveRequestOfAParticularProposal(proposalID, requestID) 
+    IfActiveRequestOfAParticularProposal(proposalID) 
     {
         Proposal storage existingProposal = proposals[proposalID];
         
@@ -320,6 +330,8 @@ contract FundVoting is ReentrancyGuard {
         newRequest.valueRequestedToBeSpent = 0;
         newRequest.completed = true;
         existingProposal.amountSpentUntilNow += transferAMount;
+        existingProposal.activeRequest--;
+
 
         (bool success, ) = newRequest.receipient.call{value : transferAMount}("");
 
@@ -399,6 +411,16 @@ contract FundVoting is ReentrancyGuard {
     IfValidProposalID(proposalID) 
     public view returns (uint256) {
         return proposals[proposalID].requestCount;
+    }
+
+    /// 
+    /// @param proposalID The proposal ID whose details user wants to view 
+    function getProposalActiveRequest(uint256 proposalID) IfValidProposalID(proposalID) 
+    external view returns (bool) {
+        if (proposals[proposalID].activeRequest == 1) {
+            return true;
+        }
+        return false;
     }
 
     /// @notice This is used to get the the address of the recepient of the particular request of that proposalID

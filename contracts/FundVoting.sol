@@ -20,7 +20,7 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__InvalidProposal();
     error  FundVoting__InvalidRequestIDOfThatProposal();
     error  FundVoting__InvalidAddress();
-    error FundAllocation__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal();
+    error  FundVoting__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal();
 
 
     // ENUMS 
@@ -193,7 +193,7 @@ contract FundVoting is ReentrancyGuard {
         Proposal storage existingProposal = proposals[proposalID];
 
         if(_recipient == existingProposal.ownerOfProposal){
-            revert FundAllocation__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal();
+            revert FundVoting__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal();
         }
         
         Request storage newRequest = existingProposal.requests[existingProposal.requestCount];
@@ -328,7 +328,7 @@ contract FundVoting is ReentrancyGuard {
         uint256 y = existingProposal.requestCount;
 
         if (y == 0 ) {
-            x = existingProposal.raisedAmount;
+            x = 0;
         }
 
         for (uint i = 0; i < y; ) {

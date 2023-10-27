@@ -22,10 +22,14 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal();
     error  FundVoting__RequestNotActive();
     error  FundVoting__RequestActiveNewRequestCantBeCreated();
+    error  FundVoting__AlreadyVotedUseChangeVoteFunction();
+    error  FundVoting__TheTimeToVoteOnTheRequestHasAlreadyExpired();
+    error  FundVoting__RequestsCanBeCreatedOnlyAterContributionTimeIsExpired();
+    error  FundVoting__PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired();
 
 
     // ENUMS 
-    enum VOTE {YES,NO,ABSTAINED}
+    enum VOTE {YES,NO}
 
     // STRUCTS
     struct Proposal {
@@ -97,11 +101,11 @@ contract FundVoting is ReentrancyGuard {
     }
 
     modifier ActiveIfRequestNotFulfilled(uint256 proposalID,uint256 requestID) {
-        Proposal storage currentProposal = proposals[proposalID];
+        // Proposal storage currentProposal = proposals[proposalID];
 
-        Request storage thisRequest = currentProposal.requests[requestID];
+        // Request storage thisRequest = proposals[proposalID].requests[requestID];
 
-        if (thisRequest.completed) {
+        if (proposals[proposalID].requests[requestID].completed) {
             revert FundVoting__RequestHasAlreadyBeenFulfilled();
         }
         _;
@@ -115,8 +119,8 @@ contract FundVoting is ReentrancyGuard {
     }
 
     modifier IfValidRequestIDOfParticularProposal(uint256 proposalID, uint256 requestID) {
-        Proposal storage currentProposal = proposals[proposalID];
-        if (currentProposal.requestCount <= requestID) {
+        // Proposal storage currentProposal = proposals[proposalID];
+        if (proposals[proposalID].requestCount <= requestID) {
             revert FundVoting__InvalidRequestIDOfThatProposal();
         }
 
@@ -124,17 +128,51 @@ contract FundVoting is ReentrancyGuard {
     }
 
     modifier IfNoActiveRequestOfAParticularProposal(uint256 proposalID) {
-        Proposal storage currentProposal = proposals[proposalID];
-        if (currentProposal.activeRequest == 0) {
+        // Proposal storage currentProposal = proposals[proposalID];
+        if (proposals[proposalID].activeRequest == 0) {
             revert FundVoting__RequestNotActive();
         }
         _;
     }
 
     modifier IfActiveRequestExists(uint256 proposalID) {
-        Proposal storage currentProposal = proposals[proposalID];
-        if (currentProposal.activeRequest > 0) {
+        // Proposal storage currentProposal = proposals[proposalID];
+        if (proposals[proposalID].activeRequest > 0) {
             revert FundVoting__RequestActiveNewRequestCantBeCreated();
+        }
+        _;
+    }
+
+    modifier IfAlreadyVoted(uint256 proposalID) {
+        // Proposal storage currentProposal = proposals[proposalID];
+        // Request storage currentRequest = currentProposal.requests[proposals[proposalID].requestCount];
+        if (proposals[proposalID].requests[proposals[proposalID].requestCount].voted[msg.sender] == VOTE.YES 
+            || proposals[proposalID].requests[proposals[proposalID].requestCount].voted[msg.sender] == VOTE.NO) {
+            revert FundVoting__AlreadyVotedUseChangeVoteFunction();
+        }        
+        _;
+    }
+
+    modifier RequestVoteNotActive(uint256 proposalID) {
+        // Proposal storage currentProposal = proposals[proposalID];
+        // Request storage currentRequest = currentProposal.requests[currentProposal.requestCount];
+        if (proposals[proposalID].requests[proposals[proposalID].requestCount].requestDeadline < block.timestamp) {
+            revert FundVoting__TheTimeToVoteOnTheRequestHasAlreadyExpired();
+        }
+        _;
+    }
+
+    modifier CreateRequestAfterContributionDeadline(uint256 proposalID) {
+        if (proposals[proposalID].deadline < block.timestamp) {
+            revert FundVoting__RequestsCanBeCreatedOnlyAterContributionTimeIsExpired();
+        }
+        _;
+    }
+
+    modifier PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired(uint256 proposalID) {
+        Proposal storage currentProposal = proposals[proposalID];
+        if (proposals[proposalID].requests[currentProposal.requestCount].requestDeadline < block.timestamp) {
+            revert FundVoting__PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired();
         }
         _;
     }
@@ -202,6 +240,7 @@ contract FundVoting is ReentrancyGuard {
     IfValidProposalID(proposalID)
     OnlyOwner(proposalID)
     IfActiveRequestExists(proposalID)
+    CreateRequestAfterContributionDeadline(proposalID)
     {
         if (_value <= 0 ) {
             revert FundVoting__ValueShouldBeGreaterThanZero();
@@ -246,6 +285,8 @@ contract FundVoting is ReentrancyGuard {
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
     IfNoActiveRequestOfAParticularProposal(proposalID)
+    IfAlreadyVoted(proposalID)
+    RequestVoteNotActive(proposalID)
      {
         Proposal storage existingProposal = proposals[proposalID];
         
@@ -282,6 +323,8 @@ contract FundVoting is ReentrancyGuard {
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID)
     IfNoActiveRequestOfAParticularProposal(proposalID) 
+    IfAlreadyVoted(proposalID)
+    RequestVoteNotActive(proposalID)
     {
         Proposal storage existingProposal = proposals[proposalID];
         
@@ -317,6 +360,7 @@ contract FundVoting is ReentrancyGuard {
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
     IfNoActiveRequestOfAParticularProposal(proposalID)
+    PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired(proposalID)
     nonReentrant 
     {
         Proposal storage existingProposal = proposals[proposalID];
@@ -340,7 +384,7 @@ contract FundVoting is ReentrancyGuard {
                 revert FundVoting__TransactionFailed();
             }
 
-            emit PaymentMade(proposalID, requestID);
+            // emit PaymentMade(proposalID, requestID);
         }
     }
 

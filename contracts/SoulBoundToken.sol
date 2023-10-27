@@ -7,6 +7,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract SoulBoundToken is ERC721, ERC721URIStorage, Ownable {
+    error SoulBoundToken__CantMintToAnExistingOwner();
+
     using Counters for Counters.Counter;
 
     Counters.Counter public _tokenIdCounter;
@@ -14,9 +16,12 @@ contract SoulBoundToken is ERC721, ERC721URIStorage, Ownable {
     event Attest(address indexed to, uint256 indexed tokenId);
     event Revoke(address indexed to, uint256 indexed tokenId);
 
-    constructor() ERC721("SoulTokens", "SOULS") payable{}
+    constructor() ERC721("SoulTokens", "SOULS") {}
 
     function safeMint(address to, string memory uri) public onlyOwner {
+        if (balanceOf(to) > 0) {
+            revert SoulBoundToken__CantMintToAnExistingOwner();
+        }
         uint256 tokenId = _tokenIdCounter.current();
         _tokenIdCounter.increment();
         _safeMint(to, tokenId);

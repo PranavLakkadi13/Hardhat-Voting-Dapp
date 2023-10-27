@@ -123,7 +123,7 @@ contract FundVoting is ReentrancyGuard {
         _;
     }
 
-    modifier IfActiveRequestOfAParticularProposal(uint256 proposalID) {
+    modifier IfNoActiveRequestOfAParticularProposal(uint256 proposalID) {
         Proposal storage currentProposal = proposals[proposalID];
         if (currentProposal.activeRequest == 0) {
             revert FundVoting__RequestNotActive();
@@ -245,7 +245,7 @@ contract FundVoting is ReentrancyGuard {
     IfValidProposalID(proposalID)
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
-    IfActiveRequestOfAParticularProposal(proposalID)
+    IfNoActiveRequestOfAParticularProposal(proposalID)
      {
         Proposal storage existingProposal = proposals[proposalID];
         
@@ -281,7 +281,7 @@ contract FundVoting is ReentrancyGuard {
     IfValidProposalID(proposalID)
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID)
-    IfActiveRequestOfAParticularProposal(proposalID) 
+    IfNoActiveRequestOfAParticularProposal(proposalID) 
     {
         Proposal storage existingProposal = proposals[proposalID];
         
@@ -316,30 +316,32 @@ contract FundVoting is ReentrancyGuard {
     IfValidProposalID(proposalID)
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
+    IfNoActiveRequestOfAParticularProposal(proposalID)
     nonReentrant 
     {
         Proposal storage existingProposal = proposals[proposalID];
         
         Request storage newRequest = existingProposal.requests[requestID];
 
-        if (newRequest.voteCount / 2 > newRequest.yesVotes ) {
-            revert FundVoting__YouDidntReceiveEnoughVotesToPassRequest();
+        if (newRequest.noVotes > newRequest.yesVotes ) {
+            // revert FundVoting__YouDidntReceiveEnoughVotesToPassRequest();
+            newRequest.completed = true;
+            existingProposal.activeRequest--;
         }
+        else {
+            uint256 transferAMount = newRequest.valueRequestedToBeSpent;
+            newRequest.completed = true;
+            existingProposal.amountSpentUntilNow += transferAMount;
+            existingProposal.activeRequest--;
 
-        uint256 transferAMount = newRequest.valueRequestedToBeSpent;
-        newRequest.valueRequestedToBeSpent = 0;
-        newRequest.completed = true;
-        existingProposal.amountSpentUntilNow += transferAMount;
-        existingProposal.activeRequest--;
+            (bool success, ) = newRequest.receipient.call{value : transferAMount}("");
 
+            if (!success) {
+                revert FundVoting__TransactionFailed();
+            }
 
-        (bool success, ) = newRequest.receipient.call{value : transferAMount}("");
-
-        if (!success) {
-            revert FundVoting__TransactionFailed();
+            emit PaymentMade(proposalID, requestID);
         }
-
-        emit PaymentMade(proposalID, requestID);
     }
 
     

@@ -114,7 +114,7 @@ contract FundVoting is ReentrancyGuard {
     }
 
     modifier IfValidProposalID(uint256 proposalID) {
-        if (proposalID > proposalCount) {
+        if (proposalID >= proposalCount) {
             revert FundVoting__InvalidProposal();
         }
         _;

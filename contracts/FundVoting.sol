@@ -26,10 +26,12 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__TheTimeToVoteOnTheRequestHasAlreadyExpired();
     error  FundVoting__RequestsCanBeCreatedOnlyAterContributionTimeIsExpired();
     error  FundVoting__PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired();
-
+    error  FundVoting__SoulBoundTokenAddressCantBeZero();
+    error  FundVoting__YouCannotAbstainFromVoting();
+    error  FundVoting__CannotChangeVoteToAbstain();
 
     // ENUMS 
-    enum VOTE {YES,NO}
+    enum VOTE {ABSTAIN,YES,NO}
 
     // STRUCTS
     struct Proposal {
@@ -163,22 +165,32 @@ contract FundVoting is ReentrancyGuard {
     }
 
     modifier CreateRequestAfterContributionDeadline(uint256 proposalID) {
-        if (proposals[proposalID].deadline < block.timestamp) {
+        if (proposals[proposalID].deadline > block.timestamp) {
             revert FundVoting__RequestsCanBeCreatedOnlyAterContributionTimeIsExpired();
         }
         _;
     }
 
     modifier PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired(uint256 proposalID) {
-        Proposal storage currentProposal = proposals[proposalID];
-        if (proposals[proposalID].requests[currentProposal.requestCount].requestDeadline < block.timestamp) {
+        // Proposal storage currentProposal = proposals[proposalID];
+        if (proposals[proposalID].requests[proposals[proposalID].requestCount].requestDeadline > block.timestamp) {
             revert FundVoting__PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired();
         }
         _;
     }
+
+    // modifier RevertIfTheVotedToAbstain(uint256 propossalID, uint256 requestID, VOTE vote) {
+    //     if (VOTE.ABSTAIN == vote) {
+    //         revert FundVoting__YouCannotAbstainFromVoting();
+    //     }
+    //     _;
+    // }
     
     // FUNCTIONS 
     constructor(address SoulBoundToken1) payable {
+        if (SoulBoundToken1 == address(0)) {
+            revert FundVoting__SoulBoundTokenAddressCantBeZero();
+        }
         Token = SoulBoundToken(SoulBoundToken1);
     }
 
@@ -288,9 +300,9 @@ contract FundVoting is ReentrancyGuard {
     IfAlreadyVoted(proposalID)
     RequestVoteNotActive(proposalID)
      {
-        Proposal storage existingProposal = proposals[proposalID];
+        // Proposal storage existingProposal = proposals[proposalID];
         
-        Request storage newRequest = existingProposal.requests[requestID];
+        Request storage newRequest = proposals[proposalID].requests[requestID];
 
         if (vote == VOTE.YES) {
             newRequest.voted[msg.sender] = VOTE.YES;
@@ -326,26 +338,30 @@ contract FundVoting is ReentrancyGuard {
     IfAlreadyVoted(proposalID)
     RequestVoteNotActive(proposalID)
     {
-        Proposal storage existingProposal = proposals[proposalID];
+        // Proposal storage existingProposal = proposals[proposalID];
         
-        Request storage newRequest = existingProposal.requests[requestID];
+        // Request storage newRequest = proposals[proposalID].requests[requestID];
 
-        if (newRequest.voted[msg.sender] == VOTE.YES) {
-            newRequest.yesVotes--;
+        if (vote == VOTE.ABSTAIN) {
+            revert FundVoting__CannotChangeVoteToAbstain();
         }
-        if (newRequest.voted[msg.sender] == VOTE.NO) {
-            newRequest.noVotes--;
+
+        if (proposals[proposalID].requests[requestID].voted[msg.sender] == VOTE.YES) {
+            proposals[proposalID].requests[requestID].yesVotes--;
+        }
+        if (proposals[proposalID].requests[requestID].voted[msg.sender] == VOTE.NO) {
+            proposals[proposalID].requests[requestID].noVotes--;
         }
 
         if (vote == VOTE.YES) {
-            newRequest.yesVotes++;
-            newRequest.voted[msg.sender] = VOTE.YES;
+            proposals[proposalID].requests[requestID].yesVotes++;
+            proposals[proposalID].requests[requestID].voted[msg.sender] = VOTE.YES;
             emit VoteCasted(msg.sender, VOTE.YES);
         }
         
         if (vote == VOTE.NO) {
-            newRequest.noVotes++;
-            newRequest.voted[msg.sender] == VOTE.NO;
+            proposals[proposalID].requests[requestID].noVotes++;
+            proposals[proposalID].requests[requestID].voted[msg.sender] == VOTE.NO;
             emit VoteCasted(msg.sender, VOTE.NO);
         }
     }
@@ -384,7 +400,7 @@ contract FundVoting is ReentrancyGuard {
                 revert FundVoting__TransactionFailed();
             }
 
-            // emit PaymentMade(proposalID, requestID);
+            emit PaymentMade(proposalID, requestID);
         }
     }
 

@@ -4,14 +4,14 @@ const { developmentChains } = require("../helper-hardhat-config");
 
 !developmentChains.includes(network.name)
   ? describe.skip
-  : describe("SoulBound Token", () => {
+  : describe("SoulBound Token Test", () => {
     let Contract;
     let deployer;
     let accounts;
     beforeEach(async () => {
       deployer = (await getNamedAccounts()).deployer;
 
-      await deployments.fixture(["SoulBoundToken"]);
+      await deployments.fixture(["all"]);
       
       Contract = await ethers.getContract('SoulBoundToken');
       accounts = await ethers.getSigners();

@@ -5,7 +5,7 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
 
 !developmentChains.includes(network.name)
   ? describe.skip
-  : describe("Voting", () => {
+  : describe("Voting Test", () => {
     let VotingContract;
     let SoulBound;
     let deployer;

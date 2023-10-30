@@ -258,6 +258,10 @@ contract FundVoting is ReentrancyGuard {
             revert FundVoting__ValueShouldBeGreaterThanZero();
         }
 
+        if (_value > getRemainingBalance(proposalID)) {
+            revert FundVoting__DontHaveSufficientFunds();
+        }
+
         if (_recipient == address(0)) {
             revert FundVoting__InvalidReceipentAddressProvided();
         }
@@ -269,10 +273,6 @@ contract FundVoting is ReentrancyGuard {
         }
         
         Request storage newRequest = existingProposal.requests[existingProposal.requestCount];
-
-        if (_value > getRemainingBalance(proposalID)) {
-            revert FundVoting__DontHaveSufficientFunds();
-        }
 
         newRequest.receipient = _recipient;
         newRequest.description = _description;

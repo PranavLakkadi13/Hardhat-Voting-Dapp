@@ -140,4 +140,111 @@ describe("FundVoting Test",() => {
             assert.equal(ContributorsCOntribution.toString(), ethers.utils.parseUnits("3000","wei"));
         });
     });
+
+    describe("Create Request Function", () => {
+        it("Should revert if the owner of the proposal is not calling it ", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await expect(FundVoting.connect(accounts[7]).CreateRequest(0,accounts[1].address,"To spend the amount",100,100)).to.be.revertedWith("FundVoting__OnlyOwnerCanCallThis");
+        });
+        it("Should revert if the proposal id is invalid ", async () => {
+            await expect(FundVoting.connect(accounts[7]).CreateRequest(0,accounts[1].address,"To spend the amount",100,100)).to.be.revertedWith("FundVoting__InvalidProposal")
+        });
+        it("Should revert if there is an already active request", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100);
+            await expect(FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100)).to.be.revertedWith("FundVoting__RequestActiveNewRequestCantBeCreated");
+        });
+        it("Should revert if we are creating a request before the contribution time ends", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await expect(FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100)).to.be.revertedWith("FundVoting__RequestsCanBeCreatedOnlyAterContributionTimeIsExpired");
+        });
+        it("Should pass only if the proposal doesnt have any active request",  async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            
+            const activerequest = await FundVoting.getProposalActiveRequest(0);
+            assert.equal(activerequest.toString(),"false");
+
+            await FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100);
+            const activerequest1 = await FundVoting.getProposalActiveRequest(0);
+            assert.equal(activerequest1.toString(),"true");
+        });
+        it("If the value to spent is 0 it should revert ", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await expect(FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",0,100)).to.be.revertedWith("FundVoting__ValueShouldBeGreaterThanZero");
+        });
+        it("Should revert if the value is greater than remaining balance", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await expect(FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",1002,100)).to.be.revertedWith("FundVoting__DontHaveSufficientFunds");
+        });
+        it("Should revert if the receipient address is address(0)", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await expect(FundVoting.CreateRequest(0,ethers.constants.AddressZero,"To spend the amount",100,100)).to.be.revertedWith("FundVoting__InvalidReceipentAddressProvided");
+        });
+        it("should revert if the recepient address is equal address of proposal owner", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await expect(FundVoting.CreateRequest(0,accounts[0].address,"To spend the amount",100,100)).to.be.revertedWith("FundVoting__TheRecepientAddressCannotBeSameAsTheOwnerOfProposal");
+        });
+        it("should emit an Event when a request is created ", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await expect(FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100)).to.emit(FundVoting,"RequestCreated");
+        });
+        it("checking the emitted values", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+
+            const trx = await FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100);
+
+            const trxReceipt = await trx.wait(1);
+
+            const proposalID = await trxReceipt.events[0].args[0].toString();
+            const recepientAddress = await trxReceipt.events[0].args[1];
+            const value = await trxReceipt.events[0].args[3].toString();
+
+            assert.equal(proposalID,"0");
+            assert.equal(recepientAddress,accounts[1].address);
+            assert.equal(value,"100");
+        });
+        it("should check the state changes", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100);
+
+            const getActiveRequest = await FundVoting.getProposalActiveRequest(0);
+            const getRequestRecepient = await FundVoting.getRequestRecepient(0,0);
+            const getRequestCount = await FundVoting.getProposalRequestCount(0);
+            const getRequestDescription = await FundVoting.getRequestDescription(0,0)
+            const getRequestValueToBeSpent = await FundVoting.getRequestValueToBeSpent(0,0);
+
+            await expect(FundVoting.getRequestResult(0,0)).not.to.be.revertedWith("FundVoting__InvalidRequestIDOfThatProposal");
+            await expect(FundVoting.getRequestResult(0,1)).to.be.revertedWith("FundVoting__InvalidRequestIDOfThatProposal")
+            
+            const currenttime = await time.latest();
+            const getRequestDeadline = await FundVoting.getRequestDeadline(0,0);
+
+            assert.equal(getActiveRequest.toString(), "true");
+            assert.equal(getRequestCount.toString(), "1");
+            assert.equal(getRequestRecepient,accounts[1].address);
+            assert.equal(getRequestDescription.toString(), "To spend the amount");
+            assert.equal(getRequestDeadline.toString(),currenttime + 100);
+            assert.equal(getRequestValueToBeSpent.toString(), "100");
+        });
+    })
   })

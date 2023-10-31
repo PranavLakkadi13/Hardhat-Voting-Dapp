@@ -121,7 +121,6 @@ contract FundVoting is ReentrancyGuard {
     }
 
     modifier IfValidRequestIDOfParticularProposal(uint256 proposalID, uint256 requestID) {
-        // Proposal storage currentProposal = proposals[proposalID];
         if (proposals[proposalID].requestCount <= requestID) {
             revert FundVoting__InvalidRequestIDOfThatProposal();
         }
@@ -130,7 +129,6 @@ contract FundVoting is ReentrancyGuard {
     }
 
     modifier IfNoActiveRequestOfAParticularProposal(uint256 proposalID) {
-        // Proposal storage currentProposal = proposals[proposalID];
         if (proposals[proposalID].activeRequest == 0) {
             revert FundVoting__RequestNotActive();
         }
@@ -138,7 +136,6 @@ contract FundVoting is ReentrancyGuard {
     }
 
     modifier IfActiveRequestExists(uint256 proposalID) {
-        // Proposal storage currentProposal = proposals[proposalID];
         if (proposals[proposalID].activeRequest > 0) {
             revert FundVoting__RequestActiveNewRequestCantBeCreated();
         }
@@ -568,6 +565,9 @@ contract FundVoting is ReentrancyGuard {
         return proposals[proposalID].requests[requestID].voted[voter];
     }
 
+    /// @notice it returns the requestDeadline of the specific request of a specific proposal 
+    /// @param proposalID The proposalId whose details you want 
+    /// @param requestID The specific requestId of the a specific proposal whose requestDeadline you want
     function getRequestDeadline(uint256 proposalID, uint256 requestID) 
     IfValidProposalID(proposalID) 
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
@@ -575,6 +575,7 @@ contract FundVoting is ReentrancyGuard {
         return proposals[proposalID].requests[requestID].requestDeadline;
     }
 
+    /// @notice it returns the address of the soulBoundToken 
     function getSoulBoundTokenAddress() external view returns (SoulBoundToken) {
         return Token;
     }

@@ -33,6 +33,12 @@ describe("FundVoting Test",() => {
         it("should revert if the goal amount is 0", async () => {
             await expect(FundVoting.createProposal("Hello", 100, 0)).to.be.revertedWith("FundVoting__ValueShouldBeGreaterThanZero");
         });
+        it("should revert if the deadline is 0", async () => {
+            await expect(FundVoting.createProposal("Hello",0,100)).to.be.revertedWith("FundVoting__ValueShouldBeGreaterThanZero");
+        });
+        it("Should revert if the description is empty", async () => {
+            await expect(FundVoting.createProposal("",100,100)).to.be.revertedWith("FundVoting__DescriptionCantBeEmpty");
+        });
         it("should allow multiple proposals at a time", async () => {
             await FundVoting.createProposal("Hello",100,100);
             await FundVoting.createProposal("Hello",100,100);
@@ -150,6 +156,18 @@ describe("FundVoting Test",() => {
         it("Should revert if the proposal id is invalid ", async () => {
             await expect(FundVoting.connect(accounts[7]).CreateRequest(0,accounts[1].address,"To spend the amount",100,100)).to.be.revertedWith("FundVoting__InvalidProposal")
         });
+        it("should revert if the deadline is 0", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await expect(FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,0)).to.be.revertedWith("FundVoting__ValueShouldBeGreaterThanZero");
+        });
+        it("Should revert if the description is empty", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await expect(FundVoting.CreateRequest(0,accounts[1].address,"",100,100)).to.be.revertedWith("FundVoting__DescriptionCantBeEmpty");
+        })
         it("Should revert if there is an already active request", async () => {
             await FundVoting.createProposal("Hello",100,100);
             await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
@@ -245,6 +263,12 @@ describe("FundVoting Test",() => {
             assert.equal(getRequestDescription.toString(), "To spend the amount");
             assert.equal(getRequestDeadline.toString(),currenttime + 100);
             assert.equal(getRequestValueToBeSpent.toString(), "100");
+        });
+    });
+    
+    describe("Vote function", () => {
+        it("should revert if the requestId is invalid", async () => {
+            
         });
     })
   })

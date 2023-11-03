@@ -8,6 +8,8 @@ contract voting {
     error voting__OnlyPeopleWithSoulBoundTokenCanParticipate();
     error voting__TheTimeToVoteHasExpired();
     error voting__AlreadyVoted();
+    error voting__DeadlineShouldBeGreaterThan0();
+    error voting__DescriptionCantBeEmpty();
 
     event ProposalCreated(string indexed Description,uint256 indexed proposalId, address indexed proposer);
     event Voted(uint256 indexed s_proposalCount, address indexed voter);
@@ -46,6 +48,14 @@ contract voting {
     }
 
     function createProposal(string calldata _description, uint256 _deadline) external MembersOnly {
+        if (_deadline <= 0) {
+            revert voting__DeadlineShouldBeGreaterThan0();
+        }
+        
+        if (bytes(_description).length <= 0) {
+            revert voting__DescriptionCantBeEmpty();
+        }
+
         Proposal storage newProposal = s_proposalMapping[s_proposalCount];
         newProposal.description = _description;
         newProposal.deadline = block.timestamp + _deadline;

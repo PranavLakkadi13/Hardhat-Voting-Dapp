@@ -29,6 +29,7 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__SoulBoundTokenAddressCantBeZero();
     error  FundVoting__YouCannotAbstainFromVoting();
     error  FundVoting__CannotChangeVoteToAbstain();
+    error  FundVoting__DescriptionCantBeEmpty();
 
     // ENUMS 
     enum VOTE {ABSTAIN,YES,NO}
@@ -104,7 +105,6 @@ contract FundVoting is ReentrancyGuard {
 
     modifier ActiveIfRequestNotFulfilled(uint256 proposalID,uint256 requestID) {
         // Proposal storage currentProposal = proposals[proposalID];
-
         // Request storage thisRequest = proposals[proposalID].requests[requestID];
 
         if (proposals[proposalID].requests[requestID].completed) {
@@ -200,6 +200,14 @@ contract FundVoting is ReentrancyGuard {
             revert FundVoting__ValueShouldBeGreaterThanZero();
         }
 
+        if (_deadline <= 0) {
+            revert FundVoting__ValueShouldBeGreaterThanZero();
+        }
+
+        if (bytes(_description).length <= 0) {
+            revert FundVoting__DescriptionCantBeEmpty();
+        }
+
         Proposal storage proposal = proposals[proposalCount];
 
         proposal.deadline = block.timestamp + _deadline;
@@ -262,6 +270,14 @@ contract FundVoting is ReentrancyGuard {
         if (_recipient == address(0)) {
             revert FundVoting__InvalidReceipentAddressProvided();
         }
+
+        if (_requestDeadline <= 0) {
+            revert FundVoting__ValueShouldBeGreaterThanZero();
+        }
+
+        if (bytes(_description).length <= 0) {
+            revert FundVoting__DescriptionCantBeEmpty();
+        } 
 
         Proposal storage existingProposal = proposals[proposalID];
 

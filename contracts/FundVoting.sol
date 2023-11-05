@@ -30,6 +30,7 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__YouCannotAbstainFromVoting();
     error  FundVoting__CannotChangeVoteToAbstain();
     error  FundVoting__DescriptionCantBeEmpty();
+    error  FundAllocation__OwnerCannotContribute();
 
     // ENUMS 
     enum VOTE {ABSTAIN,YES,NO}

@@ -235,9 +235,9 @@ contract FundVoting is ReentrancyGuard {
         
         Proposal storage proposal = proposals[proposalID];
 
-        if(thisproposal.ownerOfProposal == msg.sender){
-            revert FundAllocation__OwnerCannotContribute();
-        }
+        if(proposal.ownerOfProposal == msg.sender){
+              revert FundAllocation__OwnerCannotContribute();
+          }
 
         if (proposal.contributors[msg.sender] == 0) {
             proposal.numOfContributors++;

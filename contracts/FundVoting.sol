@@ -30,6 +30,7 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__YouCannotAbstainFromVoting();
     error  FundVoting__CannotChangeVoteToAbstain();
     error  FundVoting__DescriptionCantBeEmpty();
+    error  FundVoting__OwnerCantVote();
 
     // ENUMS 
     enum VOTE {ABSTAIN,YES,NO}
@@ -314,6 +315,9 @@ contract FundVoting is ReentrancyGuard {
     RequestVoteNotActive(proposalID)
      {
         // Proposal storage existingProposal = proposals[proposalID];
+        if (msg.sender == proposals[proposalID].ownerOfProposal) {
+            revert FundVoting__OwnerCantVote();
+        }
         
         Request storage newRequest = proposals[proposalID].requests[requestID];
 
@@ -354,6 +358,9 @@ contract FundVoting is ReentrancyGuard {
         // Proposal storage existingProposal = proposals[proposalID];
         
         // Request storage newRequest = proposals[proposalID].requests[requestID];
+        if (msg.sender == proposals[proposalID].ownerOfProposal) {
+            revert FundVoting__OwnerCantVote();
+        }
 
         if (vote == VOTE.ABSTAIN) {
             revert FundVoting__CannotChangeVoteToAbstain();

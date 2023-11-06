@@ -109,7 +109,7 @@ describe("FundVoting Test",() => {
         });
         it("SHould have a successful contribution", async () => {
             await FundVoting.createProposal("Hello",100,100);
-            for (let index = 0; index < 4; index++) {
+            for (let index = 1; index < 4; index++) {
                 await FundVoting.connect(accounts[index]).Contribute(0,{value: 1000});
             }
         });
@@ -130,7 +130,7 @@ describe("FundVoting Test",() => {
         });
         it("Checks the state changes", async () => {
             await FundVoting.createProposal("Hello",100,100);
-            for (let index = 0; index < 4; index++) {
+            for (let index = 1; index < 4; index++) {
                 await FundVoting.connect(accounts[index]).Contribute(0,{value: 1000});
             }
             await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
@@ -140,8 +140,8 @@ describe("FundVoting Test",() => {
             const remainingBalance = await FundVoting.getRemainingBalance(0);
             const ContributorsCOntribution = await FundVoting.getProposalContributor_Contribution(0,accounts[1].address);
 
-            assert.equal(contributorCount.toString(), "4");
-            assert.equal(remainingBalance.toString(), ethers.utils.parseUnits("6000","wei"));
+            assert.equal(contributorCount.toString(), "3");
+            assert.equal(remainingBalance.toString(), ethers.utils.parseUnits("5000","wei"));
             assert.equal(ContributorsCOntribution.toString(),"3000");
             assert.equal(ContributorsCOntribution.toString(), ethers.utils.parseUnits("3000","wei"));
         });

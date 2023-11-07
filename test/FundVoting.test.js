@@ -267,8 +267,26 @@ describe("FundVoting Test",() => {
     });
     
     describe("Vote function", () => {
-        it("should revert if the requestId is invalid", async () => {
-            
+        it("should revert if the not member is calling it", async () => {
+            await expect(FundVoting.connect(accounts[8]).VoteRequest(0,100,0)).to.be.revertedWith("FundVoting__OnlyMemberAllowed");
+        });
+        it("should revert if invalid proposal id given", async () => {
+            await expect(FundVoting.VoteRequest(0,100,0)).to.be.revertedWith("FundVoting__InvalidProposal");
+        });
+        it("should revert if invalid request id given", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await expect(FundVoting.VoteRequest(0,100,0)).to.be.revertedWith("FundVoting__InvalidRequestIDOfThatProposal");
+        });
+        it("should make sure i can create a request only after the previous request is fullfilled", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100);
+            await FundVoting.connect(accounts[1]).VoteRequest(0,0,1)
+
+
         });
     })
   })

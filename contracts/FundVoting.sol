@@ -144,20 +144,20 @@ contract FundVoting is ReentrancyGuard {
         _;
     }
 
-    modifier IfAlreadyVoted(uint256 proposalID) {
+    modifier IfAlreadyVoted(uint256 proposalID,uint256 requestId) {
         // Proposal storage currentProposal = proposals[proposalID];
         // Request storage currentRequest = currentProposal.requests[proposals[proposalID].requestCount];
-        if (proposals[proposalID].requests[proposals[proposalID].requestCount].voted[msg.sender] == VOTE.YES 
-            || proposals[proposalID].requests[proposals[proposalID].requestCount].voted[msg.sender] == VOTE.NO) {
+        if (proposals[proposalID].requests[requestId].voted[msg.sender] == VOTE.YES 
+            || proposals[proposalID].requests[requestId].voted[msg.sender] == VOTE.NO) {
             revert FundVoting__AlreadyVotedUseChangeVoteFunction();
         }        
         _;
     }
 
-    modifier RequestVoteNotActive(uint256 proposalID) {
+    modifier RequestVoteNotActive(uint256 proposalID, uint256 requestId) {
         // Proposal storage currentProposal = proposals[proposalID];
         // Request storage currentRequest = currentProposal.requests[currentProposal.requestCount];
-        if (proposals[proposalID].requests[proposals[proposalID].requestCount].requestDeadline < block.timestamp) {
+        if (proposals[proposalID].requests[requestId].requestDeadline < block.timestamp) {
             revert FundVoting__TheTimeToVoteOnTheRequestHasAlreadyExpired();
         }
         _;
@@ -170,9 +170,9 @@ contract FundVoting is ReentrancyGuard {
         _;
     }
 
-    modifier PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired(uint256 proposalID) {
+    modifier PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired(uint256 proposalID,uint256 requestId) {
         // Proposal storage currentProposal = proposals[proposalID];
-        if (proposals[proposalID].requests[proposals[proposalID].requestCount].requestDeadline > block.timestamp) {
+        if (proposals[proposalID].requests[requestId].requestDeadline > block.timestamp) {
             revert FundVoting__PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired();
         }
         _;
@@ -316,8 +316,8 @@ contract FundVoting is ReentrancyGuard {
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
     IfNoActiveRequestOfAParticularProposal(proposalID)
-    IfAlreadyVoted(proposalID)
-    RequestVoteNotActive(proposalID)
+    IfAlreadyVoted(proposalID,requestID)
+    RequestVoteNotActive(proposalID,requestID)
      {
         // Proposal storage existingProposal = proposals[proposalID];
         if (msg.sender == proposals[proposalID].ownerOfProposal) {
@@ -357,8 +357,8 @@ contract FundVoting is ReentrancyGuard {
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID)
     IfNoActiveRequestOfAParticularProposal(proposalID) 
-    IfAlreadyVoted(proposalID)
-    RequestVoteNotActive(proposalID)
+    IfAlreadyVoted(proposalID,requestID)
+    RequestVoteNotActive(proposalID,requestID)
     {
         // Proposal storage existingProposal = proposals[proposalID];
         
@@ -401,7 +401,7 @@ contract FundVoting is ReentrancyGuard {
     IfValidRequestIDOfParticularProposal(proposalID,requestID)
     ActiveIfRequestNotFulfilled(proposalID,requestID) 
     IfNoActiveRequestOfAParticularProposal(proposalID)
-    PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired(proposalID)
+    PaymentCanBeMadeOnlyAfterRequestVotingTimeHasExpired(proposalID,requestID)
     nonReentrant 
     {
         Proposal storage existingProposal = proposals[proposalID];

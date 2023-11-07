@@ -61,7 +61,7 @@ contract FundVoting is ReentrancyGuard {
         uint256 noVotes;
         uint256 voteCount;
         mapping(address => VOTE) voted;
-        mapping(address => bool) voteState;
+       // mapping(address => bool) voteState;
         uint256 requestDeadline;
     }
 
@@ -149,9 +149,13 @@ contract FundVoting is ReentrancyGuard {
     modifier IfAlreadyVoted(uint256 proposalID) {
         // Proposal storage currentProposal = proposals[proposalID];
         // Request storage currentRequest = currentProposal.requests[proposals[proposalID].requestCount];
-        if (proposals[proposalID].requests[proposals[proposalID].requestCount].voteState) {
+        //if (proposals[proposalID].requests[proposals[proposalID].requestCount].voteState) {
+          //  revert FundVoting__AlreadyVotedUseChangeVoteFunction();
+        // }  
+        if (proposals[proposalID].requests[requestId].voted[msg.sender] == VOTE.YES 
+            || proposals[proposalID].requests[requestId].voted[msg.sender] == VOTE.NO) {
             revert FundVoting__AlreadyVotedUseChangeVoteFunction();
-        }        
+        } 
         _;
     }
 
@@ -333,7 +337,7 @@ contract FundVoting is ReentrancyGuard {
 
         if (vote == VOTE.YES) {
             newRequest.voted[msg.sender] = VOTE.YES;
-            newRequest.voteState[msg.sender] = true;
+            // newRequest.voteState[msg.sender] = true;
             unchecked {
                 newRequest.voteCount++;
                 newRequest.yesVotes++;
@@ -343,7 +347,7 @@ contract FundVoting is ReentrancyGuard {
 
         else {
             newRequest.voted[msg.sender] = VOTE.NO;
-            newRequest.voteState[msg.sender] = true;
+            // newRequest.voteState[msg.sender] = true;
             unchecked {
                 newRequest.voteCount++;
                 newRequest.noVotes++;

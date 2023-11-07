@@ -32,6 +32,7 @@ contract FundVoting is ReentrancyGuard {
     error  FundVoting__DescriptionCantBeEmpty();
     error  FundVoting__OwnerCannotContribute();
     error  FundVoting__OwnerCantVote();
+    error  FundVoting__RecepientCannotVote();
 
     // ENUMS 
     enum VOTE {ABSTAIN,YES,NO}
@@ -325,6 +326,10 @@ contract FundVoting is ReentrancyGuard {
         }
         
         Request storage newRequest = proposals[proposalID].requests[requestID];
+
+        if(msg.sender == newRequest.receipient){
+            revert FundVoting__RecepientCannotVote();
+        }
 
         if (vote == VOTE.YES) {
             newRequest.voted[msg.sender] = VOTE.YES;

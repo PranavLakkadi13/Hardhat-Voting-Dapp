@@ -2,8 +2,8 @@
   "_format": "hh-sol-cache-2",
   "files": {
     "/Users/pranavlakkadi/HH-FCC/HH-Voting-Protocol/contracts/FundVoting.sol": {
-      "lastModificationDate": 1699378061917,
-      "contentHash": "dc185b1d16c73d03940109d686da785c",
+      "lastModificationDate": 1699379307256,
+      "contentHash": "27d625b117159b0eaa12b3d0368f4d4f",
       "sourceName": "contracts/FundVoting.sol",
       "solcConfig": {
         "version": "0.8.20",

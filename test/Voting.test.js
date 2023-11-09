@@ -64,7 +64,7 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
         });
         it("checks if the deadline is 0", async () => {
             const x = await VotingContract.getProposalCount();
-            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",0);
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
             const y = await VotingContract.getProposalCount();
             assert(x!=y);
         });

@@ -17,7 +17,7 @@ describe("FundVoting Test",() => {
       FundVoting = await ethers.getContract('FundVoting');
       accounts = await ethers.getSigners();
 
-      for(let i = 0; i < 4; i++) {
+      for(let i = 0; i < 5; i++) {
         await TokenContract.safeMint(accounts[i].address,`${i}`);
       }
 
@@ -284,9 +284,26 @@ describe("FundVoting Test",() => {
             await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
             await time.increase(110);
             await FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100);
-            await FundVoting.connect(accounts[1]).VoteRequest(0,0,1)
-
-
+            await expect(FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100)).to.be.revertedWith("FundVoting__RequestActiveNewRequestCantBeCreated");
         });
-    })
+        it("should revert if the time to vote expired", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100);
+            await FundVoting.connect(accounts[2]).VoteRequest(0,0,1);
+            await FundVoting.connect(accounts[3]).VoteRequest(0,0,2);
+            await time.increase(110);
+            await expect(FundVoting.connect(accounts[4]).VoteRequest(0,0,2)).to.be.revertedWith("FundVoting__TheTimeToVoteOnTheRequestHasAlreadyExpired");
+        });
+        it("should revert if the voter already voted", async () => {
+            await FundVoting.createProposal("Hello",100,100);
+            await FundVoting.connect(accounts[1]).Contribute(0,{value: 1000});
+            await time.increase(110);
+            await FundVoting.CreateRequest(0,accounts[1].address,"To spend the amount",100,100);
+            await FundVoting.connect(accounts[2]).VoteRequest(0,0,1);
+            await FundVoting.connect(accounts[3]).VoteRequest(0,0,2);
+            await expect(FundVoting.connect(accounts[2]).VoteRequest(0,0,2)).to.be.revertedWith("FundVoting__AlreadyVotedUseChangeVoteFunction");
+        });
+    });
   })

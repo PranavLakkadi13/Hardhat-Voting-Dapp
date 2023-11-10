@@ -7,9 +7,10 @@ contract voting {
 
     error voting__OnlyPeopleWithSoulBoundTokenCanParticipate();
     error voting__TheTimeToVoteHasExpired();
-    error voting__AlreadyVoted();
+    error voting__AlreadyVotedUse_updateVote();
     error voting__DeadlineShouldBeGreaterThan0();
     error voting__DescriptionCantBeEmpty();
+    error voting__InvalidProposalId();
 
     event ProposalCreated(string indexed Description,uint256 indexed proposalId, address indexed proposer);
     event Voted(uint256 indexed s_proposalCount, address indexed voter);
@@ -41,7 +42,7 @@ contract voting {
     }
 
     modifier InactiveProposal(uint256 proposalID) {
-        if (s_proposalMapping[proposalID].deadline <= block.timestamp) {
+        if (s_proposalMapping[proposalID].deadline < block.timestamp) {
             revert voting__TheTimeToVoteHasExpired();
         }
         _;
@@ -66,10 +67,15 @@ contract voting {
     }
 
     function casteVote(uint256 id,Vote vote) external MembersOnly InactiveProposal(id) {
+
+        if (s_proposalCount < id) {
+            revert voting__InvalidProposalId();
+        }
+
         Proposal storage proposal = s_proposalMapping[id];
 
         if (proposal.voters[msg.sender]) {
-            revert voting__AlreadyVoted();
+            revert voting__AlreadyVotedUse_updateVote();
         }
         
         if (vote == Vote.Yes) {
@@ -88,6 +94,11 @@ contract voting {
     }
 
     function updateVote(uint256 id) external InactiveProposal(id){
+
+        if (s_proposalCount < id) {
+            revert voting__InvalidProposalId();
+        }
+
         Proposal storage proposal = s_proposalMapping[id];
 
         if (proposal.voters[msg.sender]) {

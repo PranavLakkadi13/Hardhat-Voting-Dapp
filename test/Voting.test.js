@@ -68,6 +68,67 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
             const y = await VotingContract.getProposalCount();
             assert(x!=y);
         });
-    })
+        it("should revert if the description is not given", async () => { 
+            await expect(VotingContract.connect(accounts[1]).createProposal("",100)).to.be.revertedWith("voting__DescriptionCantBeEmpty")
+        });
+    });
 
+    describe("Caste Vote Function", async () => {
+        beforeEach(async () => {
+            await SoulBound.safeMint(accounts[1].address,"first");
+            await SoulBound.safeMint(accounts[2].address,"second");
+            await SoulBound.safeMint(accounts[3].address,"third");
+        });
+        it("Should revert if the voter is not a token holder", async () => {
+            await expect(VotingContract.connect(accounts[6]).createProposal("",100)).to.be.revertedWith("voting__OnlyPeopleWithSoulBoundTokenCanParticipate")
+        });
+        it("should revert if the time to caste vote has expired", async () => {
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
+            await time.increase(101);
+            await expect(VotingContract.connect(accounts[1]).casteVote(0,1)).to.be.revertedWith("voting__TheTimeToVoteHasExpired");
+        });
+        it("should revert if the proposal id is in Valid", async () => {
+            await expect(VotingContract.connect(accounts[1]).casteVote(0,1)).to.be.revertedWith("voting__InvalidProposalId");
+        });
+    });
+
+    describe("Checking Other Functions ", async () => {
+        beforeEach(async () => {
+            await SoulBound.safeMint(accounts[1].address,"first");
+            await SoulBound.safeMint(accounts[2].address,"second");
+            await SoulBound.safeMint(accounts[3].address,"third");
+        });
+        it("checking the description getProposalfunctions to see the resulting default values", async () => {
+            console.log("---------------DESCRIPTION CHECKS----------------------");
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
+            const description_exists = await VotingContract.getProposalDescription(0);
+            console.log(description_exists.toString());
+            const description_noexists = await VotingContract.getProposalDescription(1);
+            console.log(` ${description_noexists} no returned values`);
+        });
+        it("checking the Yes and NO Votes getYesVoteCountfunctions to see the resulting default values", async () => {
+            console.log("---------------YES AND NO VOTE COUNT CHECKS----------------------");
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
+            await VotingContract.connect(accounts[1]).casteVote(0,0);
+            await VotingContract.connect(accounts[2]).casteVote(0,1);
+            const YesVoteCount_exists = await VotingContract.getProposalYesVotes(0);
+            await VotingContract.connect(accounts[1]).getProposalYesVotes(0);
+            const NoVoteCount_exists = await VotingContract.getProposalNoVotes(0);
+            console.log(YesVoteCount_exists.toString() + " Yes Vote Count");
+            console.log(NoVoteCount_exists.toString() + " No Vote Count");
+            const YesVoteCount_noexists = await VotingContract.getProposalYesVotes(1);
+            const NoVoteCount_noexists = await VotingContract.getProposalNoVotes(1);
+            console.log(`${YesVoteCount_noexists} else default value for Yes Count`);
+            console.log(`${NoVoteCount_noexists} else default value for No count`);
+        });
+        it("checking the proposal deadline using getProposaldeadline to see teh resulting default values", async () => {
+            console.log("---------------PROPOSAL DEADLINE CHECKS----------------------");
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
+            const existingDeadline = await VotingContract.getProposaldeadline(0);
+            console.log(`The proposal deadlne if exists ${existingDeadline.toString()}`);
+            const defaultDeadline = await VotingContract.getProposaldeadline(1);
+            console.log(`${defaultDeadline} is the default value`);
+        });
+        
+    })
 });

@@ -11,6 +11,7 @@ contract voting {
     error voting__DeadlineShouldBeGreaterThan0();
     error voting__DescriptionCantBeEmpty();
     error voting__InvalidProposalId();
+    error voting__DontVoteIfYouWishToAbstain();
 
     event ProposalCreated(string indexed Description,uint256 indexed proposalId, address indexed proposer);
     event Voted(uint256 indexed s_proposalCount, address indexed voter);
@@ -24,7 +25,7 @@ contract voting {
         mapping(address => Vote) voteTracker;
     }
 
-    enum Vote{Yes,No}
+    enum Vote{Abstain,Yes,No}
 
     uint256 private s_proposalCount;
     mapping(uint256 => Proposal) private s_proposalMapping;
@@ -70,6 +71,10 @@ contract voting {
 
         if (s_proposalCount < id) {
             revert voting__InvalidProposalId();
+        }
+
+        if (vote == Vote.Abstain) {
+            revert voting__DontVoteIfYouWishToAbstain();
         }
 
         Proposal storage proposal = s_proposalMapping[id];
@@ -138,6 +143,11 @@ contract voting {
     function getProposaldIsVoter(uint256 id) external view returns (bool) {
         Proposal storage proposal = s_proposalMapping[id];
         return proposal.voters[msg.sender];
+    }
+
+    function getProposalVoterVote(uint256 id) external view returns(Vote) {
+        Proposal storage proposal = s_proposalMapping[id];
+        return proposal.voteTracker[msg.sender];
     }
 
     function getProposalCount() external view returns (uint256) {

@@ -121,7 +121,7 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
             console.log(`${YesVoteCount_noexists} else default value for Yes Count`);
             console.log(`${NoVoteCount_noexists} else default value for No count`);
         });
-        it("checking the proposal deadline using getProposaldeadline to see teh resulting default values", async () => {
+        it("checking the proposal deadline using getProposaldeadline to see the resulting default values", async () => {
             console.log("---------------PROPOSAL DEADLINE CHECKS----------------------");
             await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
             const existingDeadline = await VotingContract.getProposaldeadline(0);
@@ -129,6 +129,28 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
             const defaultDeadline = await VotingContract.getProposaldeadline(1);
             console.log(`${defaultDeadline} is the default value`);
         });
-        
+        it("checking is voter values using getProposaldIsVoter function to see the default values", async () => {
+            console.log("---------------PROPOSAL VOTER CHECKS----------------------");
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
+            await VotingContract.connect(accounts[1]).casteVote(0,1);
+            await VotingContract.connect(accounts[2]).casteVote(0,0);
+            const valdiVote = await VotingContract.connect(accounts[1]).getProposaldIsVoter(0);
+            console.log(valdiVote.toString() + " Is the catual value");
+            const invalidVote = await VotingContract.getProposaldIsVoter(0);
+            console.log(`${invalidVote} the default value`);
+        });
+        it("checks the votes values of a voter using getProposalVoterVote Function to what the voter as voted ", async () => {
+            console.log("---------------PROPOSAL VOTER VALUE CHECKS----------------------");
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
+            await VotingContract.connect(accounts[1]).casteVote(0,1);
+            await VotingContract.connect(accounts[2]).casteVote(0,0);
+
+            const YESVoter = await VotingContract.connect(accounts[2]).getProposalVoterVote(0);
+            console.log(`${YESVoter.toString()} is the value of yes vote`);
+            const NoVoter = await VotingContract.connect(accounts[1]).getProposalVoterVote(0);
+            console.log(`${NoVoter} is the value of No voter`);
+            const NullVoter = await VotingContract.getProposalVoterVote(0);
+            console.log(`${NullVoter} is the value of the null value`);
+        }) 
     })
 });

@@ -12,9 +12,11 @@ contract voting {
     error voting__DescriptionCantBeEmpty();
     error voting__InvalidProposalId();
     error voting__DontVoteIfYouWishToAbstain();
+    error voting__OnlyVoterCanCallTheFunction();
 
     event ProposalCreated(string indexed Description,uint256 indexed proposalId, address indexed proposer);
-    event Voted(uint256 indexed s_proposalCount, address indexed voter);
+    event Voted(uint256 indexed ProposalID, address indexed voter, Vote indexed vote);
+    event VoteUpdated(uint256 indexed proposalID, address indexed voter, Vote indexed vote);
 
     struct Proposal {
         string description;
@@ -98,23 +100,30 @@ contract voting {
         }
         proposal.voters[msg.sender] = true;
 
-        emit Voted(s_proposalCount, msg.sender);
+        emit Voted(s_proposalCount, msg.sender, vote);
     }
 
     function updateVote(uint256 id) external IsValidProposal(id) InactiveProposal(id){
 
         Proposal storage proposal = s_proposalMapping[id];
 
-        if (proposal.voters[msg.sender]) {
+        if (!proposal.voters[msg.sender]) {
+            revert voting__OnlyVoterCanCallTheFunction();
+        }
+        else {
             if (proposal.voteTracker[msg.sender] == Vote.Yes) {
                 proposal.yesVotes--;
                 proposal.noVotes++;
                 proposal.voteTracker[msg.sender] = Vote.No;
+
+                emit VoteUpdated(id, msg.sender, Vote.No);
             }
             else {
                 proposal.yesVotes++;
                 proposal.noVotes--;
                 proposal.voteTracker[msg.sender] = Vote.Yes;
+
+                emit VoteUpdated(id, msg.sender, Vote.Yes);
             }
         }
     }

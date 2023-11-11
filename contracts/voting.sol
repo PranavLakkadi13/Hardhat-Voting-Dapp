@@ -49,6 +49,13 @@ contract voting {
         _;
     }
 
+    modifier IsValidProposal(uint256 id) {
+        if (id >= s_proposalCount) {
+            revert voting__InvalidProposalId();
+        }
+        _;
+    }
+
     function createProposal(string calldata _description, uint256 _deadline) external MembersOnly {
         if (_deadline <= 0) {
             revert voting__DeadlineShouldBeGreaterThan0();
@@ -67,11 +74,7 @@ contract voting {
         emit ProposalCreated(_description, s_proposalCount, msg.sender);
     }
 
-    function casteVote(uint256 id,Vote vote) external MembersOnly InactiveProposal(id) {
-
-        if (s_proposalCount < id) {
-            revert voting__InvalidProposalId();
-        }
+    function casteVote(uint256 id,Vote vote) external MembersOnly IsValidProposal(id) InactiveProposal(id) {
 
         if (vote == Vote.Abstain) {
             revert voting__DontVoteIfYouWishToAbstain();
@@ -98,11 +101,7 @@ contract voting {
         emit Voted(s_proposalCount, msg.sender);
     }
 
-    function updateVote(uint256 id) external InactiveProposal(id){
-
-        if (s_proposalCount < id) {
-            revert voting__InvalidProposalId();
-        }
+    function updateVote(uint256 id) external IsValidProposal(id) InactiveProposal(id){
 
         Proposal storage proposal = s_proposalMapping[id];
 

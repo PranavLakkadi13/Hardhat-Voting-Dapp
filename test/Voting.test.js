@@ -87,9 +87,14 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
             await time.increase(101);
             await expect(VotingContract.connect(accounts[1]).casteVote(0,1)).to.be.revertedWith("voting__TheTimeToVoteHasExpired");
         });
-        it("should revert if the proposal id is in Valid", async () => {
-            await expect(VotingContract.connect(accounts[1]).casteVote(0,1)).to.be.revertedWith("voting__InvalidProposalId");
+        it("should revert if the proposal id is inValid", async () => {
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
+            await expect(VotingContract.connect(accounts[1]).casteVote(1,1)).to.be.revertedWith("voting__InvalidProposalId");
         });
+        it("should revert if i wish to vote to abstain", async () => {
+            await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
+            await expect(VotingContract.connect(accounts[1]).casteVote(0,0)).to.be.revertedWith("voting__DontVoteIfYouWishToAbstain");
+        })
     });
 
     describe("Checking Other Functions ", async () => {
@@ -109,8 +114,8 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
         it("checking the Yes and NO Votes getYesVoteCountfunctions to see the resulting default values", async () => {
             console.log("---------------YES AND NO VOTE COUNT CHECKS----------------------");
             await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
-            await VotingContract.connect(accounts[1]).casteVote(0,0);
-            await VotingContract.connect(accounts[2]).casteVote(0,1);
+            await VotingContract.connect(accounts[1]).casteVote(0,1);
+            await VotingContract.connect(accounts[2]).casteVote(0,2);
             const YesVoteCount_exists = await VotingContract.getProposalYesVotes(0);
             await VotingContract.connect(accounts[1]).getProposalYesVotes(0);
             const NoVoteCount_exists = await VotingContract.getProposalNoVotes(0);
@@ -132,8 +137,8 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
         it("checking is voter values using getProposaldIsVoter function to see the default values", async () => {
             console.log("---------------PROPOSAL VOTER CHECKS----------------------");
             await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
-            await VotingContract.connect(accounts[1]).casteVote(0,1);
-            await VotingContract.connect(accounts[2]).casteVote(0,0);
+            await VotingContract.connect(accounts[1]).casteVote(0,2);
+            await VotingContract.connect(accounts[2]).casteVote(0,1);
             const valdiVote = await VotingContract.connect(accounts[1]).getProposaldIsVoter(0);
             console.log(valdiVote.toString() + " Is the catual value");
             const invalidVote = await VotingContract.getProposaldIsVoter(0);
@@ -142,8 +147,8 @@ const {time} = require("@nomicfoundation/hardhat-network-helpers");
         it("checks the votes values of a voter using getProposalVoterVote Function to what the voter as voted ", async () => {
             console.log("---------------PROPOSAL VOTER VALUE CHECKS----------------------");
             await VotingContract.connect(accounts[1]).createProposal("Abhishek is GAY",100);
-            await VotingContract.connect(accounts[1]).casteVote(0,1);
-            await VotingContract.connect(accounts[2]).casteVote(0,0);
+            await VotingContract.connect(accounts[1]).casteVote(0,2);
+            await VotingContract.connect(accounts[2]).casteVote(0,1);
 
             const YESVoter = await VotingContract.connect(accounts[2]).getProposalVoterVote(0);
             console.log(`${YESVoter.toString()} is the value of yes vote`);

@@ -1,5 +1,7 @@
 {
     "python.autoComplete.extraPaths": [
         "/Users/pranavlakkadi/.vscode-oss/extensions/continue.continue-0.0.412-darwin-arm64"
-    ]
+    ],
+    "editor.tabCompletion": "on",
+    "diffEditor.codeLens": true
 }

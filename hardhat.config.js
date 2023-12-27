@@ -44,8 +44,9 @@ module.exports = {
   solidity: {
     compilers: [
       { version: "0.4.19" },
-      { version: "0.8.20" },
+      // { version: "0.8.20" },
       { version: "0.6.6" },
+      { version: "0.8.21" },
     ],
   },
   namedAccounts: {
@@ -77,7 +78,7 @@ module.exports = {
     // outputFile: "gas-reporter.txt",
     noColors: true,
     currency: "USD",
-    // coinmarketcap: Coinmarketcap_API_KEY,
+    coinmarketcap: Coinmarketcap_API_KEY,
     token: "ETH",
   },
   mocha: {
